@@ -3,7 +3,7 @@ FileNode[1:1-7:1]
 |  PythonNodeList[1:1-7:1]
 |  |  FuncDef[2:1-7:1]
 |  |  |name:
-|  |  |  Name[2:5-2:9]
+|  |  |  Id[2:5-2:9]
 |  |  |  |id: test
 |  |  |parameters:
 |  |  |  Params[2:10-2:14]
@@ -13,27 +13,29 @@ FileNode[1:1-7:1]
 |  |  |  |  |  |is_varargs: False
 |  |  |  |  |  |is_kwargs: False
 |  |  |  |  |  |name:
-|  |  |  |  |  |  Name[2:10-2:11]
+|  |  |  |  |  |  Id[2:10-2:11]
 |  |  |  |  |  |  |id: a
 |  |  |  |  |  |default_value: <null>
 |  |  |  |  |  SingleParam[2:13-2:14]
 |  |  |  |  |  |is_varargs: False
 |  |  |  |  |  |is_kwargs: False
 |  |  |  |  |  |name:
-|  |  |  |  |  |  Name[2:13-2:14]
+|  |  |  |  |  |  Id[2:13-2:14]
 |  |  |  |  |  |  |id: b
 |  |  |  |  |  |default_value: <null>
 |  |  |body:
 |  |  |  PythonNodeList[3:5-7:1]
-|  |  |  |  StringLit[3:5-5:8]
-|  |  |  |  |str: """\x0a    Return the sum of a + b\x0a    """
+|  |  |  |  ExprList[3:5-5:8]
+|  |  |  |  |  StringLit[3:5-5:8]
+|  |  |  |  |  |str: """\x0a    Return the sum of a + b\x0a    """
 |  |  |  |  ReturnStmt[6:5-6:17]
 |  |  |  |  |exprs:
-|  |  |  |  |  ArithExpr[6:12-6:17]
-|  |  |  |  |  |left:
-|  |  |  |  |  |  Name[6:12-6:13]
-|  |  |  |  |  |  |id: a
-|  |  |  |  |  |op: +
-|  |  |  |  |  |right:
-|  |  |  |  |  |  Name[6:16-6:17]
-|  |  |  |  |  |  |id: b
+|  |  |  |  |  ExprList[6:12-6:17]
+|  |  |  |  |  |  ArithExpr[6:12-6:17]
+|  |  |  |  |  |  |left:
+|  |  |  |  |  |  |  Id[6:12-6:13]
+|  |  |  |  |  |  |  |id: a
+|  |  |  |  |  |  |op: +
+|  |  |  |  |  |  |right:
+|  |  |  |  |  |  |  Id[6:16-6:17]
+|  |  |  |  |  |  |  |id: b
