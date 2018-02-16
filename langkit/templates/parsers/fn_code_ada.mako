@@ -45,6 +45,13 @@ begin
        Set (${memo}, False, ${parser.res_var}, Pos, Mem_Pos);
 
        <<Try_Again>>
+
+      % for name, typ in var_context:
+      % if str(name).startswith("Nobt"):
+      ${name} := False;
+      % endif
+      % endfor
+
    % endif
 
    ---------------------------
