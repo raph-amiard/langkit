@@ -28,7 +28,7 @@ with ${ada_lib_name}.Lexer;    use ${ada_lib_name}.Lexer;
 
 ${exts.with_clauses(with_clauses)}
 
-package body ${ada_lib_name}.Analysis.Implementation.C is
+package body ${ada_lib_name}.Implementation.C is
 
 % if ctx.default_unit_provider:
    type C_Unit_Provider_Type is
@@ -1236,4 +1236,4 @@ package body ${ada_lib_name}.Analysis.Implementation.C is
       % endif
    % endfor
 
-end ${ada_lib_name}.Analysis.Implementation.C;
+end ${ada_lib_name}.Implementation.C;

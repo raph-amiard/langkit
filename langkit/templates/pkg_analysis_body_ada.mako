@@ -37,9 +37,7 @@ with Langkit_Support.Adalog.Pure_Relations;
 use Langkit_Support.Adalog.Pure_Relations;
 pragma Warnings (On, "referenced");
 
-with ${ada_lib_name}.Analysis.Implementation;
-use ${ada_lib_name}.Analysis.Implementation;
-with ${ada_lib_name}.Analysis.Parsers; use ${ada_lib_name}.Analysis.Parsers;
+with ${ada_lib_name}.Parsers; use ${ada_lib_name}.Parsers;
 with ${ada_lib_name}.Lexer;
 
 ${(exts.with_clauses(with_clauses + [
@@ -51,15 +49,10 @@ ${(exts.with_clauses(with_clauses + [
 
 package body ${ada_lib_name}.Analysis is
 
+   use ${ada_lib_name}.Implementation;
    use AST_Envs;
 
    procedure Destroy (Unit : in out Analysis_Unit);
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Analysis_Context_Type, Analysis_Context);
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Analysis_Unit_Type, Analysis_Unit);
 
    function Create_Unit
      (Context             : Analysis_Context;
@@ -87,6 +80,30 @@ package body ${ada_lib_name}.Analysis is
       TDH   : Token_Data_Handler_Access)
       return Token_Type;
 
+
+   ---------------------------
+   -- Unit_Provider_Wrapper --
+   ---------------------------
+
+   type Unit_Provider_Wrapper is new Internal_Unit_Provider with record
+      Internal : Unit_Provider_Access_Cst;
+   end record;
+
+   function Get_Unit_Filename
+     (Provider : Unit_Provider_Wrapper;
+      Name     : Text_Type;
+      Kind     : Unit_Kind) return String
+   is (Provider.Internal.Get_Unit_Filename (Name, Kind));
+
+   function Get_Unit
+     (Provider    : Unit_Provider_Wrapper;
+      Context     : Analysis_Context;
+      Name        : Text_Type;
+      Kind        : Unit_Kind;
+      Charset     : String := "";
+      Reparse     : Boolean := False) return Analysis_Unit
+   is (Provider.Internal.Get_Unit (Context, Name, Kind, Charset, Reparse));
+
    ------------
    -- Create --
    ------------
@@ -100,10 +117,11 @@ package body ${ada_lib_name}.Analysis is
      ) return Analysis_Context
    is
       % if ctx.default_unit_provider:
-         P : constant Unit_Provider_Access_Cst :=
-           (if Unit_Provider = null
-            then ${ctx.default_unit_provider.fqn}
-            else Unit_Provider);
+         P : constant Internal_Unit_Provider_Access :=
+           new Unit_Provider_Wrapper'
+             ((if Unit_Provider = null
+               then ${ctx.default_unit_provider.fqn}
+               else Unit_Provider));
       % endif
       Actual_Charset : constant String :=
         (if Charset = "" then Default_Charset else Charset);
@@ -795,7 +813,7 @@ package body ${ada_lib_name}.Analysis is
 
    function Unit_Provider
      (Context : Analysis_Context)
-      return Unit_Provider_Access_Cst is (Context.Unit_Provider);
+      return Unit_Provider_Access_Cst is (Context.Unit_Provider.Internal);
    % endif
 
    ----------
@@ -878,24 +896,6 @@ package body ${ada_lib_name}.Analysis is
       return To_String (Unit.Charset);
    end Get_Charset;
 
-   ---------
-   -- "<" --
-   ---------
-
-   function "<" (Left, Right : Token_Type) return Boolean is
-      pragma Assert (Left.TDH = Right.TDH);
-   begin
-      if Left.Index.Token < Right.Index.Token then
-         return True;
-
-      elsif Left.Index.Token = Right.Index.Token then
-         return Left.Index.Trivia < Right.Index.Trivia;
-
-      else
-         return False;
-      end if;
-   end "<";
-
    ----------
    -- Wrap --
    ----------
@@ -909,214 +909,6 @@ package body ${ada_lib_name}.Analysis is
               then No_Token
               else (TDH, Index));
    end;
-
-   ----------
-   -- Next --
-   ----------
-
-   function Next
-     (Token          : Token_Type;
-      Exclude_Trivia : Boolean := False) return Token_Type is
-   begin
-      return (if Token.TDH = null
-              then No_Token
-              else Wrap (Next (Token.Index, Token.TDH.all,
-                               Exclude_Trivia), Token.TDH));
-   end Next;
-
-   --------------
-   -- Previous --
-   --------------
-
-   function Previous
-     (Token          : Token_Type;
-      Exclude_Trivia : Boolean := False) return Token_Type is
-   begin
-      return (if Token.TDH = null
-              then No_Token
-              else Wrap (Previous (Token.Index, Token.TDH.all,
-                                   Exclude_Trivia), Token.TDH));
-   end Previous;
-
-   ----------------
-   -- Get_Symbol --
-   ----------------
-
-   function Get_Symbol (Token : Token_Type) return Symbol_Type is
-      subtype Token_Data_Reference is
-         Token_Data_Handlers.Token_Vectors.Element_Access;
-
-      Token_Data : constant Token_Data_Reference :=
-        (if Token.Index.Trivia = No_Token_Index
-         then Token_Data_Reference
-           (Token.TDH.Tokens.Get_Access (Natural (Token.Index.Token)))
-         else Token_Data_Reference'
-           (Token.TDH.Trivias.Get_Access
-              (Natural (Token.Index.Trivia) - 1).T'Access));
-   begin
-      return Force_Symbol (Token.TDH.all, Token_Data.all);
-   end Get_Symbol;
-
-   -----------------
-   -- First_Token --
-   -----------------
-
-   function First_Token (Self : Token_Iterator) return Token_Type
-   is (Token_Start (Self.Node));
-
-   ----------------
-   -- Next_Token --
-   ----------------
-
-   function Next_Token
-     (Self : Token_Iterator; Tok : Token_Type) return Token_Type
-   is (Next (Tok));
-
-   -----------------
-   -- Has_Element --
-   -----------------
-
-   function Has_Element
-     (Self : Token_Iterator; Tok : Token_Type) return Boolean
-   is (Tok.Index.Token <= Self.Last);
-
-   -------------
-   -- Element --
-   -------------
-
-   function Element (Self : Token_Iterator; Tok : Token_Type) return Token_Type
-   is (Tok);
-
-   --------------
-   -- Raw_Data --
-   --------------
-
-   function Raw_Data (T : Token_Type) return Lexer.Token_Data_Type is
-     (if T.Index.Trivia = No_Token_Index
-      then Token_Vectors.Get (T.TDH.Tokens, Natural (T.Index.Token))
-      else Trivia_Vectors.Get (T.TDH.Trivias, Natural (T.Index.Trivia)).T);
-
-   ----------
-   -- Data --
-   ----------
-
-   function Data (Token : Token_Type) return Token_Data_Type is
-   begin
-      return Convert (Token.TDH.all, Token, Raw_Data (Token));
-   end Data;
-
-   ----------
-   -- Text --
-   ----------
-
-   function Text (Token : Token_Type) return Text_Type is
-      RD : constant Lexer.Token_Data_Type := Raw_Data (Token);
-   begin
-      return Token.TDH.Source_Buffer (RD.Source_First .. RD.Source_Last);
-   end Text;
-
-   ----------
-   -- Text --
-   ----------
-
-   function Text (First, Last : Token_Type) return Text_Type is
-      FD : constant Token_Data_Type := Data (First);
-      LD : constant Token_Data_Type := Data (Last);
-   begin
-      if First.TDH /= Last.TDH then
-         raise Constraint_Error;
-      end if;
-      return FD.Source_Buffer.all (FD.Source_First .. LD.Source_Last);
-   end Text;
-
-   ----------
-   -- Text --
-   ----------
-
-   function Text (Token : Token_Type) return String
-   is (Image (Text (Token)));
-
-   ----------
-   -- Kind --
-   ----------
-
-   function Kind (Token_Data : Token_Data_Type) return Token_Kind is
-   begin
-      return Token_Data.Kind;
-   end Kind;
-
-   ---------------
-   -- Is_Trivia --
-   ---------------
-
-   function Is_Trivia (Token : Token_Type) return Boolean is
-   begin
-      return Token.Index.Trivia /= No_Token_Index;
-   end Is_Trivia;
-
-   ---------------
-   -- Is_Trivia --
-   ---------------
-
-   function Is_Trivia (Token_Data : Token_Data_Type) return Boolean is
-   begin
-      return Token_Data.Is_Trivia;
-   end Is_Trivia;
-
-   -----------
-   -- Index --
-   -----------
-
-   function Index (Token : Token_Type) return Token_Index is
-   begin
-      return (if Token.Index.Trivia = No_Token_Index
-              then Token.Index.Token
-              else Token.Index.Trivia);
-   end Index;
-
-   -----------
-   -- Index --
-   -----------
-
-   function Index (Token_Data : Token_Data_Type) return Token_Index is
-   begin
-      return Token_Data.Index;
-   end Index;
-
-   ----------------
-   -- Sloc_Range --
-   ----------------
-
-   function Sloc_Range
-     (Token_Data : Token_Data_Type) return Source_Location_Range
-   is
-   begin
-      return Token_Data.Sloc_Range;
-   end Sloc_Range;
-
-   -------------------
-   -- Is_Equivalent --
-   -------------------
-
-   function Is_Equivalent (L, R : Token_Type) return Boolean is
-      DL : constant Token_Data_Type := Data (L);
-      DR : constant Token_Data_Type := Data (R);
-      TL : constant Text_Type := Text (L);
-      TR : constant Text_Type := Text (R);
-   begin
-      return DL.Kind = DR.Kind and then TL = TR;
-   end Is_Equivalent;
-
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Token : Token_Type) return String is
-      D : constant Token_Data_Type := Data (Token);
-   begin
-      return ("<Token Kind=" & Token_Kind_Name (D.Kind) &
-              " Text=" & Image (Text (Token), With_Quotes => True) & ">");
-   end Image;
 
    --  Those maps are used to give unique ids to lexical envs while pretty
    --  printing them.
@@ -1249,5 +1041,60 @@ package body ${ada_lib_name}.Analysis is
    is (if Value then "True" else "False");
 
    ${entities.bodies()}
+
+   -----------------
+   -- First_Token --
+   -----------------
+
+   function First_Token (Self : Token_Iterator) return Token_Type
+   is (Token_Start (Self.Node));
+
+   ----------------
+   -- Next_Token --
+   ----------------
+
+   function Next_Token
+     (Self : Token_Iterator; Tok : Token_Type) return Token_Type
+   is (Next (Tok));
+
+   -----------------
+   -- Has_Element --
+   -----------------
+
+   function Has_Element
+     (Self : Token_Iterator; Tok : Token_Type) return Boolean
+   is (Tok.Index.Token <= Self.Last);
+
+   -------------
+   -- Element --
+   -------------
+
+   function Element (Self : Token_Iterator; Tok : Token_Type) return Token_Type
+   is (Tok);
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create_Entity
+     (Node   : Implementation.${root_node_type_name};
+      E_Info : Implementation.AST_Envs.Entity_Info
+        := Implementation.AST_Envs.No_Entity_Info)
+   return ${root_entity.api_name} is
+   begin
+      return (Node, Convert (E_Info));
+   end Create_Entity;
+
+   ---------------
+   -- Bare_Node --
+   ---------------
+
+   function Bare_Node
+     (Node : ${root_entity.api_name}'Class)
+   return Implementation.${root_node_type_name}
+   is
+   begin
+      return Node.Node;
+   end Bare_Node;
 
 end ${ada_lib_name}.Analysis;

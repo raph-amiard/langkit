@@ -2644,13 +2644,14 @@ def create_builtin_types():
     automatically register them in the current CompiledTypeMetaclass.
     """
     CompiledType(
-        'AnalysisUnit',
+        'InternalUnit',
         type_repo_name='AnalysisUnitType',
         exposed=True,
         nullexpr='null',
         should_emit_array_type=True,
         null_allowed=True,
         hashable=True,
+        api_name='AnalysisUnit',
     )
 
     CompiledType(

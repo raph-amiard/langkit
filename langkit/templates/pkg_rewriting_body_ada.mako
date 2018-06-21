@@ -3,13 +3,15 @@
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
-with ${ada_lib_name}.Analysis.Implementation;
-use ${ada_lib_name}.Analysis.Implementation;
-with ${ada_lib_name}.Introspection; use ${ada_lib_name}.Introspection;
-with ${ada_lib_name}.Lexer;         use ${ada_lib_name}.Lexer;
+with ${ada_lib_name}.Common;         use ${ada_lib_name}.Common;
+with ${ada_lib_name}.Implementation;
+with ${ada_lib_name}.Introspection;  use ${ada_lib_name}.Introspection;
+with ${ada_lib_name}.Lexer;          use ${ada_lib_name}.Lexer;
 use ${ada_lib_name}.Lexer.Token_Data_Handlers;
+
 with ${ada_lib_name}.Unparsing.Implementation;
 use ${ada_lib_name}.Unparsing.Implementation;
+
 
 package body ${ada_lib_name}.Rewriting is
 
@@ -24,11 +26,11 @@ package body ${ada_lib_name}.Rewriting is
      (Rewriting_Handle_Pointer, Rewriting_Handle);
    pragma Warnings (On, "possible aliasing problem for type");
 
-   function Handle (Context : Analysis_Context) return Rewriting_Handle is
-     (Convert (Get_Rewriting_Handle (Context)));
+   function Handle (Context : Analysis_Context) return Rewriting_Handle
+   is (Convert (Get_Rewriting_Handle (Context)));
 
-   function Context (Handle : Rewriting_Handle) return Analysis_Context is
-     (Handle.Context);
+   function Context (Handle : Rewriting_Handle) return Analysis_Context
+   is (Handle.Context);
 
    function Handle
      (Node : ${root_node_type_name}) return Node_Rewriting_Handle;
@@ -262,7 +264,7 @@ package body ${ada_lib_name}.Rewriting is
    function Node
      (Handle : Node_Rewriting_Handle) return ${root_entity.api_name} is
    begin
-      return Create (Handle.Node);
+      return Create_Entity (Handle.Node);
    end Node;
 
    -------------
@@ -510,13 +512,13 @@ package body ${ada_lib_name}.Rewriting is
 
    overriding function Abstract_Child
      (Node  : access Node_Rewriting_Handle_Type;
-      Index : Positive) return Analysis.Implementation.Abstract_Node is
+      Index : Positive) return Implementation.Abstract_Node is
    begin
       return
         (case Node.Children.Kind is
          when Unexpanded          => Node.Node.Abstract_Child (Index),
          when Expanded_Regular    =>
-            Analysis.Implementation.Abstract_Node
+            Implementation.Abstract_Node
               (Node.Children.Vector.Element (Index)),
          when Expanded_Token_Node => null);
    end Abstract_Child;

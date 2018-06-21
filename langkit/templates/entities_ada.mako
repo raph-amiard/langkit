@@ -132,9 +132,6 @@
    --  Return the Index'th child of Node, or null if Node has no such child
    pragma Warnings (On, "defined after private extension");
 
-   type Visit_Status is (Into, Over, Stop);
-   --  Helper type to control the AST node traversal process. See Traverse.
-
    function Traverse
      (Node  : ${root_entity.api_name}'Class;
       Visit : access function (Node : ${root_entity.api_name}'Class)

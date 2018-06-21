@@ -69,19 +69,19 @@ ${(exts.with_clauses(with_clauses + [
    end case;
 </%def>
 
-package body ${ada_lib_name}.Analysis.Implementation is
+package body ${ada_lib_name}.Implementation is
 
    generic
       type T (<>) is limited private;
       type T_Access is access all T;
       with procedure Destroy (Object : in out T_Access);
    procedure Register_Destroyable_Gen
-     (Unit : Analysis_Unit; Object : T_Access);
+     (Unit : Internal_Unit; Object : T_Access);
    --  Generic procedure to register an object so that it is automatically
    --  destroyed when Unit is destroyed.
 
    procedure Register_Destroyable_Helper
-     (Unit    : Analysis_Unit;
+     (Unit    : Internal_Unit;
       Object  : System.Address;
       Destroy : Destroy_Procedure);
    --  Common underlying implementation for Register_Destroyable_Gen
@@ -97,7 +97,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
 
    type Internal_Analysis_Unit is access all Analysis_Unit_Type;
    function Convert is new Ada.Unchecked_Conversion
-     (Analysis_Unit, Internal_Analysis_Unit);
+     (Internal_Unit, Internal_Analysis_Unit);
 
    procedure Destroy (Env : in out Lexical_Env_Access);
 
@@ -123,7 +123,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    ------------------------------
 
    procedure Register_Destroyable_Gen
-     (Unit : Analysis_Unit; Object : T_Access)
+     (Unit : Internal_Unit; Object : T_Access)
    is
       function Convert is new Ada.Unchecked_Conversion
         (System.Address, Destroy_Procedure);
@@ -150,7 +150,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- "<" --
    ---------
 
-   function "<" (Left, Right : Analysis_Unit) return Boolean is
+   function "<" (Left, Right : Internal_Unit) return Boolean is
       use GNATCOLL.VFS;
    begin
       return Left.File_Name < Right.File_Name;
@@ -433,7 +433,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    ----------
 
    function Unit
-     (Node : access ${root_node_value_type}'Class) return Analysis_Unit is
+     (Node : access ${root_node_value_type}'Class) return Internal_Unit is
    begin
       return Node.Unit;
    end Unit;
@@ -871,7 +871,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
      (Node : access ${root_node_value_type}'Class) return Boolean
    is
 
-      Context  : constant Analysis_Context := Node.Unit.Context;
+      Context  : constant Internal_Context := Node.Unit.Context;
       Root_Env : constant Lexical_Env := Context.Root_Scope;
 
       function Populate_Internal
@@ -1063,7 +1063,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    % endif
 
    % if T.AnalysisUnitType.requires_hash_function:
-      function Hash (Unit : Analysis_Unit) return Hash_Type is
+      function Hash (Unit : Internal_Unit) return Hash_Type is
         (GNATCOLL.VFS.Full_Name_Hash (Unit.File_Name));
    % endif
 
@@ -1231,7 +1231,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Version --
    -------------
 
-   function Version (Unit : Analysis_Unit) return Natural is
+   function Version (Unit : Internal_Unit) return Natural is
    begin
       return Unit.Unit_Version;
    end Version;
@@ -1585,26 +1585,6 @@ package body ${ada_lib_name}.Analysis.Implementation is
      (if Node.Token_End_Index = No_Token_Index
       then Node.Token_Start
       else Node.Token (Node.Token_End_Index));
-
-   -------------
-   -- Convert --
-   -------------
-
-   function Convert
-     (TDH      : Token_Data_Handler;
-      Token    : Token_Type;
-      Raw_Data : Lexer.Token_Data_Type) return Analysis.Token_Data_Type is
-   begin
-      return (Kind          => Raw_Data.Kind,
-              Is_Trivia     => Token.Index.Trivia /= No_Token_Index,
-              Index         => (if Token.Index.Trivia = No_Token_Index
-                                then Token.Index.Token
-                                else Token.Index.Trivia),
-              Source_Buffer => Text_Cst_Access (TDH.Source_Buffer),
-              Source_First  => Raw_Data.Source_First,
-              Source_Last   => Raw_Data.Source_Last,
-              Sloc_Range    => Raw_Data.Sloc_Range);
-   end Convert;
 
    -----------
    -- Token --
@@ -2119,9 +2099,9 @@ package body ${ada_lib_name}.Analysis.Implementation is
       -- Trace_Image --
       -----------------
 
-      function Trace_Image (Unit : Analysis_Unit) return String is
+      function Trace_Image (Unit : Internal_Unit) return String is
       begin
-         return "Analysis_Unit (""" & Basename (Unit) & """)";
+         return "Internal_Unit (""" & Basename (Unit) & """)";
       end Trace_Image;
 
       -----------------
@@ -2342,7 +2322,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    ----------
 
    function Unit
-     (Node : ${root_entity.api_name}'Class) return Analysis_Unit is
+     (Node : ${root_entity.api_name}'Class) return Internal_Unit is
    begin
       return Node.Node.Unit;
    end Unit;
@@ -2351,26 +2331,15 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Token_Data --
    ----------------
 
-   function Token_Data (Unit : Analysis_Unit) return Token_Data_Handler_Access
+   function Token_Data (Unit : Internal_Unit) return Token_Data_Handler_Access
    is (Unit.TDH'Access);
-
-   ---------------------
-   -- Symbol_Literals --
-   ---------------------
-
-   function Symbol_Literals
-     (Context : Analysis_Context) return Symbol_Literal_Array_Access
-   is
-   begin
-      return Context.Symbol_Literals'Access;
-   end Symbol_Literals;
 
    -------------------
    -- Lookup_Symbol --
    -------------------
 
    function Lookup_Symbol
-     (Context : Analysis_Context; Symbol : Text_Type) return Symbol_Type is
+     (Context : Internal_Context; Symbol : Text_Type) return Symbol_Type is
    begin
       return Find (Context.Symbols, Symbol);
    end Lookup_Symbol;
@@ -2380,12 +2349,12 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -------------------------
 
    function Create_Special_Unit
-     (Context             : Analysis_Context;
+     (Context             : Internal_Context;
       Normalized_Filename : GNATCOLL.VFS.Virtual_File;
       Charset             : String;
-      Rule                : Grammar_Rule) return Analysis_Unit
+      Rule                : Grammar_Rule) return Internal_Unit
    is
-      Unit : Analysis_Unit := new Analysis_Unit_Type'
+      Unit : Internal_Unit := new Analysis_Unit_Type'
         (Context           => Context,
          Ref_Count         => 1,
          AST_Root          => null,
@@ -2417,7 +2386,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Templates_Unit --
    --------------------
 
-   function Templates_Unit (Context : Analysis_Context) return Analysis_Unit is
+   function Templates_Unit (Context : Internal_Context) return Internal_Unit is
    begin
       if Context.Templates_Unit = No_Analysis_Unit then
          Context.Templates_Unit := Create_Special_Unit
@@ -2434,7 +2403,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Set_Rule --
    --------------
 
-   procedure Set_Rule (Unit : Analysis_Unit; Rule : Grammar_Rule) is
+   procedure Set_Rule (Unit : Internal_Unit; Rule : Grammar_Rule) is
    begin
       Unit.Rule := Rule;
    end Set_Rule;
@@ -2444,7 +2413,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    ------------------------------
 
    function Normalized_Unit_Filename
-     (Context : Analysis_Context; Filename : String)
+     (Context : Internal_Context; Filename : String)
       return GNATCOLL.VFS.Virtual_File
    is
       use GNATCOLL.VFS;
@@ -2471,7 +2440,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    --------------------------
 
    procedure Register_Destroyable_Helper
-     (Unit    : Analysis_Unit;
+     (Unit    : Internal_Unit;
       Object  : System.Address;
       Destroy : Destroy_Procedure)
    is
@@ -2484,7 +2453,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    --------------------------
 
    procedure Register_Destroyable
-     (Unit : Analysis_Unit; Node : ${root_node_type_name})
+     (Unit : Internal_Unit; Node : ${root_node_type_name})
    is
       procedure Helper is new Register_Destroyable_Gen
         (${root_node_value_type}'Class,
@@ -2494,33 +2463,11 @@ package body ${ada_lib_name}.Analysis.Implementation is
       Helper (Unit, Node);
    end Register_Destroyable;
 
-   ------------
-   -- Create --
-   ------------
-
-   function Create
-     (Node   : ${root_node_type_name};
-      E_Info : Entity_Info := No_Entity_Info) return ${root_entity.api_name}
-   is
-   begin
-      return (Node, Convert (E_Info));
-   end Create;
-
-   ---------------
-   -- Bare_Node --
-   ---------------
-
-   function Bare_Node
-     (Node : ${root_entity.api_name}'Class) return ${root_node_type_name} is
-   begin
-      return Node.Node;
-   end Bare_Node;
-
    -----------------------
    -- Invalidate_Caches --
    -----------------------
 
-   procedure Invalidate_Caches (Context : Analysis_Context) is
+   procedure Invalidate_Caches (Context : Internal_Context) is
    begin
       --  Increase Context's version number. If we are about to overflow, reset
       --  all version numbers from analysis units.
@@ -2538,7 +2485,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    --  Reset_Envs  --
    ------------------
 
-   procedure Reset_Envs (Unit : Analysis_Unit) is
+   procedure Reset_Envs (Unit : Internal_Unit) is
 
       procedure Deactivate_Refd_Envs
         (Node : access ${root_node_value_type}'Class);
@@ -2611,7 +2558,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Basename --
    --------------
 
-   function Basename (Unit : Analysis_Unit) return String is
+   function Basename (Unit : Internal_Unit) return String is
       use GNATCOLL.VFS;
    begin
       return +Unit.File_Name.Base_Name;
@@ -2621,7 +2568,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Reset_Caches --
    ------------------
 
-   procedure Reset_Caches (Unit : Analysis_Unit) is
+   procedure Reset_Caches (Unit : Internal_Unit) is
    begin
       if Unit.Cache_Version < Unit.Context.Cache_Version then
          Traces.Trace
@@ -2642,7 +2589,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
       ----------------------------
 
       function Lookup_Memoization_Map
-        (Unit   : Analysis_Unit;
+        (Unit   : Internal_Unit;
          Key    : in out Mmz_Key;
          Cursor : out Memoization_Maps.Cursor) return Boolean
       is
@@ -2667,7 +2614,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Reference_Unit --
    --------------------
 
-   procedure Reference_Unit (From, Referenced : Analysis_Unit) is
+   procedure Reference_Unit (From, Referenced : Internal_Unit) is
       Dummy : Boolean;
    begin
       Dummy := Analysis_Unit_Sets.Add (From.Referenced_Units, Referenced);
@@ -2678,7 +2625,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    ------------------------
 
    function Is_Referenced_From
-     (Referenced, Unit : Analysis_Unit) return Boolean is
+     (Referenced, Unit : Internal_Unit) return Boolean is
    begin
       if Unit = null or else Referenced = null then
          return False;
@@ -2694,9 +2641,9 @@ package body ${ada_lib_name}.Analysis.Implementation is
    ----------------
 
    procedure Do_Parsing
-     (Unit : Analysis_Unit; Input : Lexer_Input; Result : out Reparsed_Unit)
+     (Unit : Internal_Unit; Input : Lexer_Input; Result : out Reparsed_Unit)
    is
-      Context  : constant Analysis_Context := Unit.Context;
+      Context  : constant Internal_Context := Unit.Context;
       Unit_TDH : constant Token_Data_Handler_Access := Token_Data (Unit);
 
       Saved_TDH : Token_Data_Handler;
@@ -2771,7 +2718,8 @@ package body ${ada_lib_name}.Analysis.Implementation is
       begin
          Init_Parser
            (Input, Context.With_Trivia, Unit, Unit_TDH,
-            Parsers.Symbol_Literal_Array_Access (Symbol_Literals (Context)),
+            Parsers.Symbol_Literal_Array_Access
+              (Context.Symbol_Literals'Access),
             Unit.Context.Parser);
       exception
          when Exc : Name_Error =>
@@ -2819,7 +2767,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    --------------------------
 
    procedure Update_After_Reparse
-     (Unit : Analysis_Unit; Reparsed : in out Reparsed_Unit) is
+     (Unit : Internal_Unit; Reparsed : in out Reparsed_Unit) is
    begin
       --  Replace Unit's diagnostics by Reparsed's
       Unit.Diagnostics := Reparsed.Diagnostics;
@@ -2862,7 +2810,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Destroy_Unit_Destroyables --
    -------------------------------
 
-   procedure Destroy_Unit_Destroyables (Unit : Analysis_Unit) is
+   procedure Destroy_Unit_Destroyables (Unit : Internal_Unit) is
    begin
       for D of Unit.Destroyables loop
          D.Destroy (D.Object);
@@ -2874,7 +2822,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Flush_Populate_Lexical_Env_Queue --
    --------------------------------------
 
-   procedure Flush_Populate_Lexical_Env_Queue (Context : Analysis_Context) is
+   procedure Flush_Populate_Lexical_Env_Queue (Context : Internal_Context) is
       Foreign_Nodes : ${root_node_type_name}_Vectors.Vector :=
          ${root_node_type_name}_Vectors.Empty_Vector;
    begin
@@ -2945,7 +2893,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    -- Remove_Exiled_Entries --
    ---------------------------
 
-   procedure Remove_Exiled_Entries (Unit : Analysis_Unit) is
+   procedure Remove_Exiled_Entries (Unit : Internal_Unit) is
    begin
       for EE of Unit.Exiled_Entries loop
          if EE.Env.Owner = No_Analysis_Unit
@@ -2983,7 +2931,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    ---------------------------
 
    procedure Extract_Foreign_Nodes
-     (Unit          : Analysis_Unit;
+     (Unit          : Internal_Unit;
       Foreign_Nodes : in out ${root_node_type_name}_Vectors.Vector) is
    begin
       for FN of Unit.Foreign_Nodes loop
@@ -3014,7 +2962,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
 
    procedure Reroot_Foreign_Node (Node : access ${root_node_value_type}'Class)
    is
-      Unit : constant Analysis_Unit := Node.Unit;
+      Unit : constant Internal_Unit := Node.Unit;
    begin
 
       --  First, filter the exiled entries in foreign units so that they don't
@@ -3134,7 +3082,7 @@ package body ${ada_lib_name}.Analysis.Implementation is
    --------------------------
 
    function Get_Rewriting_Handle
-     (Context : Analysis_Context) return Rewriting_Handle_Pointer is
+     (Context : Internal_Context) return Rewriting_Handle_Pointer is
    begin
       return Context.Rewriting_Handle;
    end Get_Rewriting_Handle;
@@ -3144,11 +3092,11 @@ package body ${ada_lib_name}.Analysis.Implementation is
    --------------------------
 
    procedure Set_Rewriting_Handle
-     (Context : Analysis_Context; Handle : Rewriting_Handle_Pointer) is
+     (Context : Internal_Context; Handle : Rewriting_Handle_Pointer) is
    begin
       Context.Rewriting_Handle := Handle;
    end Set_Rewriting_Handle;
 
 begin
    No_Big_Integer.Value.Set (0);
-end ${ada_lib_name}.Analysis.Implementation;
+end ${ada_lib_name}.Implementation;

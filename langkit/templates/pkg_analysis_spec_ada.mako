@@ -20,9 +20,8 @@ with Langkit_Support.Slocs;       use Langkit_Support.Slocs;
 with Langkit_Support.Symbols;     use Langkit_Support.Symbols;
 with Langkit_Support.Text;        use Langkit_Support.Text;
 
-with GNATCOLL.GMP.Integers;
-
-limited private with ${ada_lib_name}.Analysis.Implementation;
+with ${ada_lib_name}.Implementation;
+with ${ada_lib_name}.Common;     use ${ada_lib_name}.Common;
 
 with ${ada_lib_name}.Lexer; use ${ada_lib_name}.Lexer;
 use ${ada_lib_name}.Lexer.Token_Data_Handlers;
@@ -57,26 +56,6 @@ package ${ada_lib_name}.Analysis is
    --  Special value to mean the absence of analysis unit. No analysis units
    --  can be passed this value.
 
-   type Grammar_Rule is (
-      % for i, name in enumerate(ctx.user_rule_names):
-         % if i > 0:
-            ,
-         % endif
-         ${Name.from_lower(name)}_Rule
-      % endfor
-   );
-   ${ada_doc('langkit.grammar_rule_type', 3)}
-
-   Property_Error : exception;
-   ${ada_doc('langkit.property_error', 3)}
-
-   type Token_Type is private;
-   ${ada_doc('langkit.token_type', 3)}
-
-   No_Token : constant Token_Type;
-
-   subtype Big_Integer is GNATCOLL.GMP.Integers.Big_Integer;
-
    Default_Charset : constant String := ${string_repr(ctx.default_charset)};
 
    ---------------
@@ -100,12 +79,6 @@ package ${ada_lib_name}.Analysis is
    --------------------
    -- Unit providers --
    --------------------
-
-   type Unit_Kind is (Unit_Specification, Unit_Body);
-   ${ada_doc('langkit.unit_kind_type', 3)}
-
-   Invalid_Unit_Name_Error : exception;
-   ${ada_doc('langkit.invalid_unit_name_error', 3)}
 
    type Unit_Provider_Interface is limited interface;
    type Unit_Provider_Access is
@@ -318,100 +291,29 @@ package ${ada_lib_name}.Analysis is
    -- Miscellanous operations --
    -----------------------------
 
-   ## Output enumerators so that all concrete AST_Node subclasses get their own
-   ## kind. Nothing can be an instance of an abstract subclass, so these do not
-   ## need their own kind.
-   type ${root_node_kind_name} is
-     (${', '.join(cls.ada_kind_name
-                  for cls in ctx.astnode_types
-                  if not cls.abstract)});
-   --  AST node concrete types
-
-   for ${root_node_kind_name} use
-     (${', '.join('{} => {}'.format(cls.ada_kind_name,
-                                    ctx.node_kind_constants[cls])
-                  for cls in ctx.astnode_types
-                  if not cls.abstract)});
-
-   ## Output subranges to materialize abstract classes as sets of their
-   ## concrete subclasses.
-   % for cls in ctx.astnode_types:
-      <% subclasses = cls.concrete_subclasses %>
-      % if subclasses:
-         subtype ${cls.ada_kind_range_name} is
-            ${root_node_kind_name} range
-               ${subclasses[0].ada_kind_name}
-               .. ${subclasses[-1].ada_kind_name};
-      % endif
-   % endfor
-
    function Is_Token_Node (Kind : ${root_node_kind_name}) return Boolean;
    --  Return whether Kind corresponds to a token node
 
    function Is_List_Node (Kind : ${root_node_kind_name}) return Boolean;
    --  Return whether Kind corresponds to a list node
 
-   -----------------------
-   -- Lexical utilities --
-   -----------------------
-
-   type Token_Data_Type is private;
-
-   function "<" (Left, Right : Token_Type) return Boolean;
-   --  Assuming Left and Right belong to the same analysis unit, return whether
-   --  Left came before Right in the source file.
-
-   function Next
-     (Token          : Token_Type;
-      Exclude_Trivia : Boolean := False) return Token_Type;
-   ${ada_doc('langkit.token_next', 3)}
-
-   function Previous
-     (Token          : Token_Type;
-      Exclude_Trivia : Boolean := False) return Token_Type;
-   ${ada_doc('langkit.token_previous', 3)}
-
-   function Data (Token : Token_Type) return Token_Data_Type;
-   --  Return the data associated to T
-
-   function Is_Equivalent (L, R : Token_Type) return Boolean;
-   ${ada_doc('langkit.token_is_equivalent', 3)}
-
-   function Image (Token : Token_Type) return String;
-   --  Debug helper: return a human-readable text to represent a token
-
-   function Text (Token : Token_Type) return Text_Type;
-   --  Return the text of the token as Text_Type
-
-   function Text (Token : Token_Type) return String;
-   --  Return the text of the token as String
-
-   function Text (First, Last : Token_Type) return Text_Type;
-   ${ada_doc('langkit.token_range_text', 3)}
-
-   function Get_Symbol (Token : Token_Type) return Symbol_Type;
-   --  Assuming that Token refers to a token that contains a symbol, return the
-   --  corresponding symbol.
-
-   function Kind (Token_Data : Token_Data_Type) return Token_Kind;
-   ${ada_doc('langkit.token_kind', 3)}
-
-   function Is_Trivia (Token : Token_Type) return Boolean;
-   ${ada_doc('langkit.token_is_trivia', 3)}
-
-   function Is_Trivia (Token_Data : Token_Data_Type) return Boolean;
-   ${ada_doc('langkit.token_is_trivia', 3)}
-
-   function Index (Token : Token_Type) return Token_Index;
-   function Index (Token_Data : Token_Data_Type) return Token_Index;
-   ${ada_doc('langkit.token_index', 3)}
-
-   function Sloc_Range
-     (Token_Data : Token_Data_Type) return Source_Location_Range;
-   --  Source location range for this token. Note that the end bound is
-   --  exclusive.
-
    ${entities.decls2()}
+
+   -----------------------
+   -- Enumeration types --
+   -----------------------
+
+   function Image (Value : Boolean) return String;
+
+   -----------------
+   -- Array types --
+   -----------------
+
+   % for array_type in ctx.sorted_types(ctx.array_types):
+      % if array_type._exposed:
+         ${array_types.public_api_decl(array_type)}
+      % endif
+   % endfor
 
    --------------------
    -- Token Iterator --
@@ -438,24 +340,23 @@ package ${ada_lib_name}.Analysis is
    function Element (Self : Token_Iterator; Tok : Token_Type) return Token_Type;
    --  Identity function: helper for the Iterable aspect
 
-   -----------------------
-   -- Enumeration types --
-   -----------------------
-
-   function Image (Value : Boolean) return String;
-
-   -----------------
-   -- Array types --
-   -----------------
-
-   % for array_type in ctx.sorted_types(ctx.array_types):
-      % if array_type._exposed:
-         ${array_types.public_api_decl(array_type)}
-      % endif
-   % endfor
-
    ${entities.decls3()}
 
+   function Create_Entity
+     (Node   : Implementation.${root_node_type_name};
+      E_Info : Implementation.AST_Envs.Entity_Info
+        := Implementation.AST_Envs.No_Entity_Info)
+   return ${root_entity.api_name};
+
+   function Bare_Node
+     (Node : ${root_entity.api_name}'Class)
+     return Implementation.${root_node_type_name};
+
+   function To_Unit
+     (Unit : Implementation.Internal_Unit) return Analysis_Unit;
+
+   function To_Context
+     (Context : Implementation.Internal_Context) return Analysis_Context;
 private
 
    type Analysis_Context is access all Implementation.Analysis_Context_Type;
@@ -517,41 +418,6 @@ private
         (null, No_Public_Entity_Info);
    % endfor
 
-   -----------------------------------
-   -- Lexical utilities (internals) --
-   -----------------------------------
-
-   type Token_Type is record
-      TDH : Token_Data_Handler_Access;
-      --  Token data handler that owns this token
-
-      Index : Token_Or_Trivia_Index;
-      --  Identifier for the trivia or the token this refers to
-   end record;
-
-   No_Token : constant Token_Type := (null, No_Token_Or_Trivia_Index);
-
-   type Token_Data_Type is record
-      Kind          : Token_Kind;
-      --  See documentation for the Kind accessor
-
-      Is_Trivia     : Boolean;
-      --  See documentation for the Is_Trivia accessor
-
-      Index         : Token_Index;
-      --  See documentation for the Index accessor
-
-      Source_Buffer : Text_Cst_Access;
-      --  Text for the original source file
-
-      Source_First  : Positive;
-      Source_Last   : Natural;
-      --  Bounds in Source_Buffer for the text corresponding to this token
-
-      Sloc_Range    : Source_Location_Range;
-      --  See documenation for the Sloc_Range accessor
-   end record;
-
    --------------------------------
    -- Token Iterator (internals) --
    --------------------------------
@@ -561,7 +427,14 @@ private
       Last : Token_Index;
    end record;
 
-   function Raw_Data (T : Token_Type) return Lexer.Token_Data_Type;
-   --  Return the raw token data for T
+   function To_Unit
+     (Unit : Implementation.Internal_Unit) return Analysis_Unit
+   is
+     (Analysis_Unit (Unit));
+
+   function To_Context
+     (Context : Implementation.Internal_Context) return Analysis_Context
+   is
+     (Analysis_Context (Context));
 
 end ${ada_lib_name}.Analysis;
