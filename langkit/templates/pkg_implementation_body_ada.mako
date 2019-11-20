@@ -22,25 +22,14 @@ with System;
 
 with GNATCOLL.Traces;
 
+with Langkit_Support.Adalog.Debug;
 with Langkit_Support.Hashes;  use Langkit_Support.Hashes;
 with Langkit_Support.Images;  use Langkit_Support.Images;
 with Langkit_Support.Relative_Get;
 
-pragma Warnings (Off, "referenced");
-with Langkit_Support.Adalog.Abstract_Relation;
-use Langkit_Support.Adalog.Abstract_Relation;
-with Langkit_Support.Adalog.Debug;
-use Langkit_Support.Adalog.Debug;
-with Langkit_Support.Adalog.Operations;
-use Langkit_Support.Adalog.Operations;
-with Langkit_Support.Adalog.Predicates;
-use Langkit_Support.Adalog.Predicates;
-with Langkit_Support.Adalog.Pure_Relations;
-use Langkit_Support.Adalog.Pure_Relations;
-pragma Warnings (On, "referenced");
-
 with ${ada_lib_name}.Private_Converters;
 use ${ada_lib_name}.Private_Converters;
+
 with ${ada_lib_name}.Introspection_Implementation;
 
 ${exts.with_clauses(with_clauses + [
@@ -76,6 +65,8 @@ ${exts.with_clauses(with_clauses + [
 </%def>
 
 package body ${ada_lib_name}.Implementation is
+
+   use Solver;
 
    package Context_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
@@ -133,7 +124,7 @@ package body ${ada_lib_name}.Implementation is
      (V : AST_Envs.Entity_Vectors.Vector) return ${T.entity.array.name};
 
    function Solve_Wrapper
-     (R            : Relation;
+     (R            : Logic_Equation;
       Context_Node : ${T.root_node.name}) return Boolean;
    --  Wrapper for Langkit_Support.Adalog.Solve; will handle setting the debug
    --  strings in the equation if in debug mode.
@@ -1156,7 +1147,7 @@ package body ${ada_lib_name}.Implementation is
    -------------------
 
    function Solve_Wrapper
-     (R            : Relation;
+     (R            : Logic_Equation;
       Context_Node : ${T.root_node.name}) return Boolean is
    begin
       if Context_Node /= null and then Langkit_Support.Adalog.Debug.Debug then
@@ -1164,7 +1155,7 @@ package body ${ada_lib_name}.Implementation is
       end if;
 
       begin
-         return Solve (R, Context_Node.Unit.Context.Logic_Resolution_Timeout);
+         return Solver.Solve_First (R);
       exception
          when Langkit_Support.Adalog.Early_Binding_Error =>
             raise Property_Error with "invalid equation for logic resolution";
@@ -3330,8 +3321,8 @@ package body ${ada_lib_name}.Implementation is
          --  TODO??? Fix Adalog so that Destroy resets the
          --  value it stores.
          LV.Value := No_Entity;
-         Eq_Node.Refs.Reset (LV);
-         Eq_Node.Refs.Destroy (LV);
+         Entity_Vars.Reset (LV);
+         Entity_Vars.Destroy (LV);
       end Reset;
 
       K : constant ${T.node_kind} := Node.Kind;
