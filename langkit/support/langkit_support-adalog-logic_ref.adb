@@ -52,9 +52,9 @@ package body Langkit_Support.Adalog.Logic_Ref is
    procedure Set_Value (Self : in out Var; Data : Element_Type) is
    begin
       if Debug.Debug then
-         Trace ("Setting the value of " & Image (Self) & " to "
+         Verbose_Trace.Trace ("Setting the value of " & Image (Self) & " to "
                 & Element_Image (Data));
-         Trace ("Old value is " & Element_Image (Self.Value));
+         Verbose_Trace.Trace ("Old value is " & Element_Image (Self.Value));
       end if;
 
       Dec_Ref (Self.Value);
@@ -81,12 +81,10 @@ package body Langkit_Support.Adalog.Logic_Ref is
    -- Reset --
    -----------
 
-   pragma Warnings (Off);
-   procedure Reset (Self : in out Raw_Var) is
+   procedure Reset (Self : Raw_Var) is
    begin
       Reset (Self.all);
    end Reset;
-   pragma Warnings (On);
 
    ----------------
    -- Is_Defined --
@@ -94,6 +92,9 @@ package body Langkit_Support.Adalog.Logic_Ref is
 
    function Is_Defined (Self : Raw_Var) return Boolean is
    begin
+      if Self.Aliased_To /= null then
+         return Is_Defined (Self.Aliased_To);
+      end if;
       return Is_Defined (Self.all);
    end Is_Defined;
 
@@ -101,10 +102,11 @@ package body Langkit_Support.Adalog.Logic_Ref is
    -- Set_Value --
    ---------------
 
-   pragma Warnings (Off);
-   procedure Set_Value (Self : in out Raw_Var; Data : Element_Type) is
-   pragma Warnings (On);
+   procedure Set_Value (Self : Raw_Var; Data : Element_Type) is
    begin
+      if Self.Aliased_To /= null then
+         Set_Value (Self.Aliased_To, Data);
+      end if;
       Set_Value (Self.all, Data);
    end Set_Value;
 
@@ -114,8 +116,44 @@ package body Langkit_Support.Adalog.Logic_Ref is
 
    function Get_Value (Self : Raw_Var) return Element_Type is
    begin
+      if Self.Aliased_To /= null then
+         return Get_Value (Self.Aliased_To);
+      end if;
       return Get_Value (Self.all);
    end Get_Value;
+
+   -----------
+   -- Alias --
+   -----------
+
+   procedure Alias (Self, To : Raw_Var) is
+   begin
+      if To = Self or else To.Aliased_To = Self then
+         return;
+      elsif Self.Aliased_To = null then
+         Self.Aliased_To := To;
+      else
+         Alias (Self.Aliased_To, To);
+      end if;
+   end Alias;
+
+   -------------
+   -- Unalias --
+   -------------
+
+   procedure Unalias (Self : Raw_Var) is
+   begin
+      Self.Aliased_To := null;
+   end Unalias;
+
+   -----------
+   -- Alias --
+   -----------
+
+   function Get_Alias (Self : Raw_Var) return Raw_Var is
+   begin
+      return Self.Aliased_To;
+   end Get_Alias;
 
    ------------
    -- Create --
@@ -125,6 +163,29 @@ package body Langkit_Support.Adalog.Logic_Ref is
    begin
       return new Var'(Reset => True, others => <>);
    end Create;
+
+   --------
+   -- Id --
+   --------
+
+   function Id (Self : Raw_Var) return Natural
+   is
+     (if Self.Aliased_To /= null then Id (Self.Aliased_To) else Self.Id);
+
+   ------------
+   -- Set_Id --
+   ------------
+
+   procedure Set_Id (Self : Raw_Var; Id : Natural)
+   is
+   begin
+      if Id = 0 then
+         Self.Aliased_To := null;
+      elsif Self.Aliased_To /= null then
+         Set_Id (Self.Aliased_To, Id);
+      end if;
+      Self.Id := Id;
+   end Set_Id;
 
    -------------
    -- Destroy --

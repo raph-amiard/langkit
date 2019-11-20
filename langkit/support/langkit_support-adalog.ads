@@ -21,7 +21,9 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
-package Langkit_Support.Adalog with Pure is
+with GNATCOLL.Traces;
+
+package Langkit_Support.Adalog is
 
    Early_Binding_Error : exception;
    --  Exception raised when an equation cannot be solved because a logic
@@ -30,5 +32,20 @@ package Langkit_Support.Adalog with Pure is
    Timeout_Error : exception;
    --  Exception raised when the resolution of a complex relation exceeded the
    --  number of steps allowed.
+
+   Solver_Trace : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+     ("LANGKIT.SOLVER", Default => GNATCOLL.Traces.From_Config);
+
+   Verbose_Trace : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+     ("LANGKIT.SOLVER.VERBOSE", Default => GNATCOLL.Traces.From_Config);
+
+   Trav_Trace : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+     ("LANGKIT.SOLVER.TRAVERSAL", Default => GNATCOLL.Traces.From_Config);
+
+   Solv_Trace  : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+     ("LANGKIT.SOLVER.SOLVE", Default => GNATCOLL.Traces.From_Config);
+
+   Sol_Trace  : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
+     ("LANGKIT.SOLVER.SOLUTION", Default => GNATCOLL.Traces.From_Config);
 
 end Langkit_Support.Adalog;
