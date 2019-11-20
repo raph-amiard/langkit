@@ -199,6 +199,10 @@ package Langkit_Support.Vectors is
    procedure Generic_Sort (Self : in out Vector);
    --  Sort elements in Self so that Self.Element (1) < Self.Element (2) < ...
 
+   procedure Reserve (Self : in out Vector; Capacity : Positive)
+     with Inline;
+   --  Reserve Capacity elements
+
 private
 
    subtype Internal_Elements_Array is Elements_Array (Index_Type);
@@ -218,10 +222,6 @@ private
       Capacity : Natural := Small_Vector_Capacity;
       SV       : Small_Array_Type;
    end record;
-
-   procedure Reserve (Self : in out Vector; Capacity : Natural)
-     with Inline;
-   --  Reserve Capacity elements
 
    Empty_Vector : constant Vector := (E => null, Size => 0, others => <>);
 
