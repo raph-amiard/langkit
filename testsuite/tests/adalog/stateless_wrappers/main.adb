@@ -7,7 +7,7 @@ use Langkit_Support.Adalog.Main_Support;
 --  Test stateless predicate constructor
 
 procedure Main is
-   use T_Solver, Refs;
+   use T_Solver, Refs, Solver_Ifc;
 
    function Is_Odd (X : Integer) return Boolean is (X mod 2 = 1);
    function Double (X : Integer) return Integer is (X * 2);

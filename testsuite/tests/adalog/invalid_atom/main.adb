@@ -9,8 +9,7 @@ use Langkit_Support.Adalog.Main_Support;
 --  Test that an atomic boolean rel solves correctly
 
 procedure Main is
-   use T_Solver;
-   use Refs;
+   use T_Solver; use Refs; use Solver_Ifc;
 
    X : Raw_Var := Create ("X");
 

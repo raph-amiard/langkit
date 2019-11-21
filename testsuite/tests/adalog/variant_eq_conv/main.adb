@@ -1,7 +1,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Text_IO;      use Ada.Text_IO;
 
 with GNATCOLL.Strings; use GNATCOLL.Strings;
-with Ada.Text_IO;      use Ada.Text_IO;
 
 with GNATCOLL.Traces;
 
@@ -33,6 +33,7 @@ procedure Main is
    use Val_Support;
    use T_Solver;
    use Refs;
+   use Solver_Ifc;
 
    function I (V : Integer) return Val_Type
    is (Val_Type'(K => Int, Int_Val => V));

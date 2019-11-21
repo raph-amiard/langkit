@@ -9,10 +9,9 @@ use Langkit_Support.Adalog.Main_Support;
 --  reset after evaluating a solution.
 
 procedure Main is
-   use T_Solver;
-   use Refs;
+   use T_Solver, Refs, Solver_Ifc;
 
-   function Abs_Equal (Vals : T_Solver.Value_Array) return Boolean is
+   function Abs_Equal (Vals : Value_Array) return Boolean is
      (abs Vals (1) = abs Vals (2));
 
    X : Refs.Raw_Var := Create ("X");

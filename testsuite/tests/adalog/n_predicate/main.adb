@@ -8,12 +8,12 @@ use Langkit_Support.Adalog.Main_Support;
 
 procedure Main is
 
-   use T_Solver, Refs;
+   use T_Solver, Refs, Solver_Ifc;
 
    function Times_3 (Val : Integer) return Integer
    is (Val * 3);
 
-   function Double_Of (Vals : T_Solver.Value_Array) return Boolean
+   function Double_Of (Vals : Solver_Ifc.Value_Array) return Boolean
    is (Vals (1) = Vals (2) * 2);
 
    X : Raw_Var := Create ("X");

@@ -9,8 +9,7 @@ use Langkit_Support.Adalog.Main_Support;
 --  defined in all branches.
 
 procedure Main is
-   use T_Solver;
-   use Refs;
+   use T_Solver, Refs, Solver_Ifc;
 begin
    GNATCOLL.Traces.Parse_Config_File;
     declare

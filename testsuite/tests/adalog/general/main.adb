@@ -12,7 +12,7 @@ with Support; use Support;
 
 procedure Main is
 
-   use T_Solver, Refs;
+   use T_Solver, Refs, Solver_Ifc;
 
    X : Raw_Var := Create ("X");
    Y : Raw_Var := Create ("Y");

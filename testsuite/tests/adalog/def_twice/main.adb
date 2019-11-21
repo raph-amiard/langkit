@@ -7,7 +7,7 @@ use Langkit_Support.Adalog.Main_Support;
 --  twice in a solution.
 
 procedure Main is
-   use T_Solver; use Refs;
+   use T_Solver, Refs, Solver_Ifc;
 
    function Is_Odd (V : Integer) return Boolean is (V mod 2 = 1);
 

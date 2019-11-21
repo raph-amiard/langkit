@@ -3,7 +3,7 @@ use Langkit_Support.Adalog.Main_Support;
 
 package Support is
 
-   use Int_Solver;
+   use Int_Solver, Solver_Ifc;
 
    type Transformer is new Int_Solver.Converter_Type with null record;
    function Convert (Self : Transformer; Val : Integer) return Integer

@@ -9,8 +9,7 @@ use Langkit_Support.Adalog.Main_Support;
 --  reset after evaluating a solution.
 
 procedure Main is
-   use T_Solver;
-   use Refs;
+   use T_Solver, Refs, Solver_Ifc;
 
    function Is_Even (Val : Integer) return Boolean is (Val mod 2 = 0);
 

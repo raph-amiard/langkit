@@ -2,7 +2,7 @@ with Langkit_Support.Adalog.Main_Support;
 use Langkit_Support.Adalog.Main_Support;
 
 package Support is
-   use T_Solver;
+   use T_Solver, Solver_Ifc;
 
    type Transformer is new Converter_Type with null record;
    function Convert (Dummy : Transformer; I : Integer) return Integer

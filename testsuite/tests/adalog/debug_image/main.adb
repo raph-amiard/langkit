@@ -12,8 +12,7 @@ use Langkit_Support.Adalog.Main_Support;
 --  shown when printing a relation.
 
 procedure Main is
-   use T_Solver;
-   use Refs;
+   use T_Solver, Refs, Solver_Ifc;
 
    function S return String renames GNAT.Source_Info.Source_Location;
 
