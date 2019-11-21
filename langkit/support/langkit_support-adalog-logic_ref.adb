@@ -92,6 +92,8 @@ package body Langkit_Support.Adalog.Logic_Ref is
 
    function Is_Defined (Self : Raw_Var) return Boolean is
    begin
+      --  TODO: This logic seems to be in the wrong place, this should be in
+      --  Is_Defined on Refs.
       if Self.Aliased_To /= null then
          return Is_Defined (Self.Aliased_To);
       end if;

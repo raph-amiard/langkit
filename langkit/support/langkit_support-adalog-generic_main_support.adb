@@ -56,8 +56,8 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
    use Refs.Raw_Logic_Var;
 
    function Safe_Get_Value (V : Refs.Raw_Var) return String is
-     ((if Is_Defined (V)
-       then Image (Get_Value (V))
+     ((if Refs.Is_Defined (V)
+       then Image (Refs.Get_Value (V))
        else "<undefined>"));
 
    ---------------
@@ -126,5 +126,6 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
    end Control;
 
    Dummy_Finalize : Control.C;
-
+begin
+   GNATCOLL.Traces.Parse_Config_File;
 end Langkit_Support.Adalog.Generic_Main_Support;

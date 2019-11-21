@@ -22,19 +22,21 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 
 with Langkit_Support.Adalog.Solver_Interface;
-private with Langkit_Support.Adalog.Symbolic_Solver;
+with Langkit_Support.Vectors;
 
 generic
    with package Solver_Ifc
      is new Langkit_Support.Adalog.Solver_Interface (<>);
-package Langkit_Support.Adalog.Solver is
+package Langkit_Support.Adalog.Symbolic_Solver is
 
    use Solver_Ifc;
    use Logic_Vars;
 
-   type Relation is private;
+   type Relation_Type is private;
+   type Relation is access all Relation_Type;
    --  Type for a relation. A relation is either an atomic relation, or a
    --  compound relation, which can represent a tree of relations of unbounded
    --  depth. Solving a relation will assign values to every logic variable
@@ -77,8 +79,10 @@ package Langkit_Support.Adalog.Solver is
    -- Relation constructors --
    ---------------------------
 
-   type Relation_Array is array (Positive range <>) of Relation;
-   No_Relation_Array : constant Relation_Array;
+   package Relation_Vectors is new Langkit_Support.Vectors (Relation);
+   subtype Relation_Array is Relation_Vectors.Elements_Array;
+   No_Relation_Array : Relation_Array
+     renames Relation_Vectors.Empty_Array;
 
    function Create_Predicate
      (Logic_Var    : Var;
@@ -157,23 +161,154 @@ package Langkit_Support.Adalog.Solver is
    function Relation_Image (Self : Relation) return String;
    procedure Print_Relation (Self : Relation);
 
-   type Solver_Kind is (State_Machine, Symbolic);
-
-   procedure Set_Kind (Kind : Solver_Kind);
-
 private
-   package Sym_Solve
-   is new Langkit_Support.Adalog.Symbolic_Solver (Solver_Ifc);
 
-   type Relation (Kind : Solver_Kind := Symbolic) is record
+   type Converter_Access is access all Converter_Type'Class;
+   type Comparer_Access is access all Comparer_Type'Class;
+   type Predicate_Access is access all Predicate_Type'Class;
+   type N_Predicate_Access is access all N_Predicate_Type'Class;
+
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Comparer_Type'Class, Comparer_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Converter_Type'Class, Converter_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Predicate_Type'Class, Predicate_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (N_Predicate_Type'Class, N_Predicate_Access);
+
+   package Logic_Var_Vectors
+   is new Langkit_Support.Vectors (Var);
+   subtype Logic_Var_Vector is Logic_Var_Vectors.Vector;
+   type Logic_Var_Vector_Access is access Logic_Var_Vector;
+
+   ---------------------
+   -- Atomic_Relation --
+   ---------------------
+
+   type Atomic_Kind is (Propagate, Unify, Assign, Predicate,
+                        N_Predicate, True, False);
+
+   type Atomic_Relation (Kind : Atomic_Kind := Propagate) is record
+      Target : Logic_Vars.Var;
+      --  Every atomic relation has a target. Depending on the relation, it
+      --  will be *used* or *defined*.
+
       case Kind is
-         when Symbolic =>
-            Symbolic_Relation : Sym_Solve.Relation;
-         when State_Machine =>
-            null;
+         when Assign | Propagate =>
+            Conv     : Converter_Access := null;
+            --  An access to the projection co nverter, if there is one
+
+            Can_Fail : Boolean := False;
+
+            case Kind is
+               when Assign =>
+                  Val      : Value_Type;
+                  --  The value we want to assign to ``Target``
+
+               when Propagate =>
+                  From     : Logic_Vars.Var;
+                  --  The variable from which we want to propagate
+
+               when others => null;
+            end case;
+         when Predicate =>
+            Pred     : Predicate_Access;
+            --  The predicate that will be applied as part of this relation
+         when N_Predicate =>
+            Vars     : Logic_Var_Vector;
+            N_Pred   : N_Predicate_Access;
+            --  The predicate that will be applied as part of this relation
+
+         when Unify =>
+            Unify_From : Logic_Vars.Var;
+         when True | False => null;
+      end case;
+   end record;
+   --  An atomic relation is a relation that has no children. When we get
+   --  to solve a specific solution, we expect to have a set of only atomic
+   --  relations.
+   --
+   --  Atomic relations can be either Assign, ``Propagate, or ``Predicate``.
+   --  Semantics of those are defined in the public, in the list of relation
+   --  constructors.
+
+   function Solve_Atomic (Self : Atomic_Relation) return Boolean;
+   --  Solve this atomic relation
+
+   function Image (Self : Atomic_Relation) return String;
+
+   procedure Destroy (Self : in out Atomic_Relation);
+   --  Destroy this atomic relation
+
+   ----------------------------------------
+   --  Atomic relations dependency graph --
+   ----------------------------------------
+
+   --  In this section, we'll define types and operations on the graph of
+   --  dependencies between atomic relations. This is what will allow us to:
+   --
+   --  1. Sort a list of atomic relations topologically, so that they form an
+   --  executable list of instructions.
+   --
+   --  2. Define a map from vars to atomic rels where for every var `V`, the
+   --  map maps `V -> [R1, R2, R3, ...]` where `Used_Var (RN) = V`. This map
+   --  will allow us cut some branches of the solution tree early.
+
+   type Var_Or_Null (Exists : Boolean := False) is record
+      case Exists is
+         when True => Logic_Var : Var;
+         when False => null;
+      end case;
+   end record;
+   --  Option type for a Var. Used to express dependencies from an atomic
+   --  relation to a logic variable.
+
+   Null_Var : Var_Or_Null := (Exists => False);
+
+   function Is_Defined_Or_Null (Logic_Var : Var_Or_Null) return Boolean
+   is
+     ((not Logic_Var.Exists) or else Is_Defined (Logic_Var.Logic_Var));
+   --  Shortcut predicate. Returns whether a variable is defined or is null
+
+   function Used_Var (Self : Atomic_Relation) return Var_Or_Null;
+   --  Return the variable that this atomic relation uses, if there is one
+
+   function Defined_Var (Self : Atomic_Relation) return Var_Or_Null;
+   --  Return the variable that this atomic relation defines, if there is one
+
+   -----------------------
+   -- Compound relation --
+   -----------------------
+
+   type Compound_Kind is (Kind_All, Kind_Any);
+
+   type Compound_Relation is record
+      Kind : Compound_Kind;
+      Rels : Relation_Vectors.Vector;
+   end record;
+
+   procedure Destroy (Self : in out Compound_Relation);
+   function Image
+     (Self         : Compound_Relation;
+      Level        : Natural := 0;
+      Debug_String : String_Access := null) return String;
+
+   --------------
+   -- Relation --
+   --------------
+
+   type Relation_Kind is (Atomic, Compound);
+
+   type Relation_Type (Kind : Relation_Kind := Atomic) is record
+      Ref_Count  : Integer range -1 .. Integer'Last := 1;
+      Debug_Info : Ada.Strings.Unbounded.String_Access := null;
+      case Kind is
+         when Atomic   => Atomic_Rel   : Atomic_Relation;
+         when Compound => Compound_Rel : Compound_Relation;
       end case;
    end record;
 
-   No_Relation_Array : constant Relation_Array (1 .. 0) := (others => <>);
+   procedure Destroy (Self : Relation);
 
-end Langkit_Support.Adalog.Solver;
+end Langkit_Support.Adalog.Symbolic_Solver;

@@ -26,7 +26,8 @@
 with Ada.Containers.Vectors;
 
 with Langkit_Support.Adalog.Logic_Ref;
-with Langkit_Support.Adalog.Solver;
+with Langkit_Support.Adalog.Solver_Interface;
+with Langkit_Support.Adalog.Symbolic_Solver;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 generic
@@ -38,10 +39,11 @@ package Langkit_Support.Adalog.Generic_Main_Support is
      (T, Element_Image => Image);
    function Create (Name : String) return Refs.Raw_Var;
 
-   package T_Solver is new Langkit_Support.Adalog.Solver
-     (Refs.Raw_Logic_Var);
+   package Solver_Ifc is new Solver_Interface (Refs.Raw_Logic_Var);
 
-   use T_Solver;
+   package T_Solver is new Langkit_Support.Adalog.Symbolic_Solver (Solver_Ifc);
+
+   use Solver_Ifc, T_Solver;
 
    function "+" (R : Relation) return Relation;
    --  Register R and return it. This is used to keep track of allocated

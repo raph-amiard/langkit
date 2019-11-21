@@ -6,7 +6,7 @@ with Langkit_Support.Adalog.Main_Support;
 use Langkit_Support.Adalog.Main_Support;
 
 procedure Main is
-   use T_Solver; use Refs;
+   use T_Solver; use Refs; use Solver_Ifc;
 
    X : Raw_Var := Create ("X");
    Y : Raw_Var := Create ("Y");
