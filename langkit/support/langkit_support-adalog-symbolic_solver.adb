@@ -31,7 +31,6 @@ with Langkit_Support.Functional_Lists;
 with Langkit_Support.Images;
 
 pragma Style_Checks ("-s");
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Langkit_Support.Adalog.Symbolic_Solver is
 
@@ -90,6 +89,10 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
       Cmp_Kind     : Compound_Kind;
       Debug_String : String_Access := null) return Relation;
    --  Helper to create a compound relationship
+
+   function Internal_Image
+     (Self : Relation; Level : Natural := 0) return String;
+   --  Internal image function for a relation
 
    type Callback_Type is access function (Vars : Var_Array) return Boolean;
    --  Type used to store the callback. TODO: This should make more data
@@ -1657,7 +1660,7 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
 
       for Rel of Self.Rels loop
          Ret.Append ((1 .. Level + 4 => ' ')
-                     & Image (Rel, Level + 4) & ASCII.LF);
+                     & Internal_Image (Rel, Level + 4) & ASCII.LF);
       end loop;
 
       return Ret.To_String;
@@ -1667,7 +1670,8 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
    -- Image --
    -----------
 
-   function Image (Self : Relation; Level : Natural := 0) return String is
+   function Internal_Image
+     (Self : Relation; Level : Natural := 0) return String is
    begin
       case Self.Kind is
          when Compound =>
@@ -1678,21 +1682,12 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
                  then " " & Self.Debug_Info.all
                  else "");
       end case;
-   end Image;
+   end Internal_Image;
 
    --------------------
    -- Relation_Image --
    --------------------
 
-   function Relation_Image (Self : Relation) return String is (Image (Self));
-
-   --------------------
-   -- Print_Relation --
-   --------------------
-
-   procedure Print_Relation (Self : Relation) is
-   begin
-      Put_Line (Relation_Image (Self));
-   end Print_Relation;
+   function Image (Self : Relation) return String is (Internal_Image (Self));
 
 end Langkit_Support.Adalog.Symbolic_Solver;

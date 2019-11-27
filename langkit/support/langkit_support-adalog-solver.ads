@@ -21,14 +21,19 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Hash;
 
 with Langkit_Support.Adalog.Solver_Interface;
+with Langkit_Support.Adalog.Eq_Same;
 private with Langkit_Support.Adalog.Symbolic_Solver;
+with Langkit_Support.Adalog.Abstract_Relation;
 
 generic
    with package Solver_Ifc
      is new Langkit_Support.Adalog.Solver_Interface (<>);
+   Debug : Boolean := False;
 package Langkit_Support.Adalog.Solver is
 
    use Solver_Ifc;
@@ -152,9 +157,7 @@ package Langkit_Support.Adalog.Solver is
    function Create_False
      (Debug_String : String_Access := null) return Relation;
 
-   function Image (Self : Relation; Level : Natural := 0) return String;
-
-   function Relation_Image (Self : Relation) return String;
+   function Image (Self : Relation) return String;
    procedure Print_Relation (Self : Relation);
 
    type Solver_Kind is (State_Machine, Symbolic);
@@ -165,12 +168,26 @@ private
    package Sym_Solve
    is new Langkit_Support.Adalog.Symbolic_Solver (Solver_Ifc);
 
+   package SSM_Solve
+   is new Langkit_Support.Adalog.Eq_Same (Solver_Ifc);
+
+   use Ada.Strings;
+
+   package Var_Sets is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Var, Hash, "=", "=");
+   type Var_Set is access all Var_Sets.Map;
+
    type Relation (Kind : Solver_Kind := Symbolic) is record
       case Kind is
          when Symbolic =>
             Symbolic_Relation : Sym_Solve.Relation;
          when State_Machine =>
-            null;
+            SSM_Relation      : Abstract_Relation.Relation;
+            Vars              : Var_Set := null;
+            --  This vector is used to keep track of logic vars in the old
+            --  solver, since it doesn't and we need them to implement the
+            --  version of ``Solve`` that takes the array of variables in
+            --  the callback. If ``Debug`` is False, it isn't used.
       end case;
    end record;
 

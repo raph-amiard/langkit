@@ -156,10 +156,7 @@ package Langkit_Support.Adalog.Symbolic_Solver is
    function Create_False
      (Debug_String : String_Access := null) return Relation;
 
-   function Image (Self : Relation; Level : Natural := 0) return String;
-
-   function Relation_Image (Self : Relation) return String;
-   procedure Print_Relation (Self : Relation);
+   function Image (Self : Relation) return String;
 
 private
 

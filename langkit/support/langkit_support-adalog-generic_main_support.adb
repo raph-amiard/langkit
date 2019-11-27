@@ -21,7 +21,9 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Environment_Variables;
 with Ada.Text_IO; use Ada.Text_IO;
+
 with Langkit_Support.Images;
 
 package body Langkit_Support.Adalog.Generic_Main_Support is
@@ -80,7 +82,7 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
    begin
       if Show_Relation then
          Put_Line ("Solving relation:");
-         Put_Line (Image (Rel));
+         Print_Relation (Rel);
       end if;
       Solve
         (Rel,
@@ -93,13 +95,15 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
          Destroyed : Boolean := False;
       end record;
       overriding procedure Finalize (Self : in out C);
+
+      Dummy_Finalize : Control.C;
    end Control;
 
    package body Control is
 
-      -------------
-      -- Release --
-      -------------
+      --------------
+      -- Finalize --
+      --------------
 
       overriding procedure Finalize (Self : in out C) is
          Used : Boolean := False;
@@ -122,10 +126,20 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
             end if;
          end if;
       end Finalize;
-
    end Control;
 
-   Dummy_Finalize : Control.C;
+   package Env renames Ada.Environment_Variables;
 begin
    GNATCOLL.Traces.Parse_Config_File;
+   if Env.Exists ("ADALOG_SOLVER_KIND") then
+      if Env.Value ("ADALOG_SOLVER_KIND") = "SYM" then
+         T_Solver.Set_Kind (Symbolic);
+      elsif Env.Value ("ADALOG_SOLVER_KIND") = "SSM" then
+         T_Solver.Set_Kind (State_Machine);
+      else
+         raise Program_Error
+           with "Invalid value for env var ""ADALOG_SOLVER_KIND""";
+      end if;
+   end if;
+
 end Langkit_Support.Adalog.Generic_Main_Support;

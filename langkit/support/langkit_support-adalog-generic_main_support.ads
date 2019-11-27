@@ -27,7 +27,7 @@ with Ada.Containers.Vectors;
 
 with Langkit_Support.Adalog.Logic_Ref;
 with Langkit_Support.Adalog.Solver_Interface;
-with Langkit_Support.Adalog.Symbolic_Solver;
+with Langkit_Support.Adalog.Solver;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 generic
@@ -41,7 +41,7 @@ package Langkit_Support.Adalog.Generic_Main_Support is
 
    package Solver_Ifc is new Solver_Interface (Refs.Raw_Logic_Var);
 
-   package T_Solver is new Langkit_Support.Adalog.Symbolic_Solver (Solver_Ifc);
+   package T_Solver is new Langkit_Support.Adalog.Solver (Solver_Ifc, True);
 
    use Solver_Ifc, T_Solver;
 

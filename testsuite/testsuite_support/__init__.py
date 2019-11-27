@@ -23,12 +23,14 @@ if not with_gnatpython:
 
 import testsuite_support.langkit_support_driver
 import testsuite_support.python_driver
+import testsuite_support.adalog_driver
 
 
 class Testsuite(BaseTestsuite):
     TEST_SUBDIR = 'tests'
     DRIVERS = {
         'python': testsuite_support.python_driver.PythonDriver,
+        'adalog': testsuite_support.adalog_driver.AdalogDriver,
         'langkit_support':
         testsuite_support.langkit_support_driver.LangkitSupportDriver
     }

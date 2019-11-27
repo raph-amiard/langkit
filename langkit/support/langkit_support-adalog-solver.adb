@@ -21,7 +21,119 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
+with Langkit_Support.Adalog.Predicates;
+with Langkit_Support.Adalog.Operations;
+with Langkit_Support.Adalog.Pure_Relations;
+
+with Ada.Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Langkit_Support.Adalog.Solver is
+
+   procedure Append_Var (Self : in out Relation; V : Var);
+
+   type Default_Converter is null record;
+   function Convert
+     (Dummy : Default_Converter; From : Value_Type) return Value_Type
+   is (From);
+
+   type Default_Eq is null record;
+   function Equals
+     (Dummy : Default_Eq; L, R : Value_Type) return Boolean
+   is (L = R);
+
+   package SSM_Unify is new SSM_Solve.Raw_Custom_Bind
+     (Converter        => Default_Converter,
+      No_Data          => (null record),
+      Equals_Data      => Default_Eq,
+      No_Equals_Data   => (null record),
+      Convert          => Convert,
+      Equals           => Equals,
+      One_Side_Convert => False);
+
+   type Comparer_Access is access all Solver_Ifc.Comparer_Type'Class;
+   function Equals (Self : Comparer_Access; L, R : Value_Type) return Boolean
+   is
+     (if Self = null
+      then L = R
+      else Self.Compare (L, R));
+
+   type Converter_Access is access all Solver_Ifc.Converter_Type'Class;
+   function Convert
+     (Self : Converter_Access; From : Value_Type) return Value_Type
+   is
+     (if Self = null
+      then From
+      else Self.Convert (From));
+
+   package SSM_Bind is new SSM_Solve.Raw_Custom_Bind
+     (Converter        => Converter_Access,
+      No_Data          => null,
+      Equals_Data      => Comparer_Access,
+      No_Equals_Data   => null,
+      Convert          => Convert,
+      Equals           => Equals,
+      One_Side_Convert => True);
+
+   ---------------------------
+   -- SSM Predicate wrapper --
+   ---------------------------
+
+   type Predicate_Access is access all Solver_Ifc.Predicate_Type'Class;
+   function Call (Self : Predicate_Access; Val : Value_Type) return Boolean
+   is
+     (Self.Call (Val));
+
+   function Image (Self : Predicate_Access) return String
+   is
+     (Self.Image);
+
+   procedure Free
+   is new Ada.Unchecked_Deallocation
+     (Solver_Ifc.Predicate_Type'Class, Predicate_Access);
+
+   package SSM_Predicate is new Predicates.Predicate
+     (El_Type        => Value_Type,
+      Var            => Solver_Ifc.Logic_Vars,
+      Predicate_Type => Predicate_Access,
+      Call           => Call,
+      Free           => Free,
+      Image          => Image);
+
+   type N_Predicate_Access is access all Solver_Ifc.N_Predicate_Type'Class;
+   function Call (Self : N_Predicate_Access; Vals : Val_Array) return Boolean
+   is
+     (Self.Call (Vals));
+
+   function Image (Self : N_Predicate_Access) return String
+   is
+     (Self.Image);
+
+   procedure Free
+   is new Ada.Unchecked_Deallocation
+     (Solver_Ifc.N_Predicate_Type'Class, N_Predicate_Access);
+
+   package SSM_N_Predicate is new Predicates.N_Predicate
+     (El_Type        => Value_Type,
+      Var            => Solver_Ifc.Logic_Vars,
+      Predicate_Type => N_Predicate_Access,
+      Call           => Call,
+      Free           => Free,
+      Image          => Image);
+
+   ----------------
+   -- Append_Var --
+   ----------------
+
+   procedure Append_Var (Self : in out Relation; V : Var) is
+   begin
+      if Debug then
+         if Self.Vars = null then
+            Self.Vars := new Var_Sets.Map;
+         end if;
+         Self.Vars.Include (Image (V), V);
+      end if;
+   end Append_Var;
 
    Global_Kind : Solver_Kind := Symbolic;
 
@@ -42,7 +154,7 @@ package body Langkit_Support.Adalog.Solver is
    begin
       case Self.Kind is
          when Symbolic => Sym_Solve.Inc_Ref (Self.Symbolic_Relation);
-         when State_Machine => raise Program_Error with "Not implemented";
+         when State_Machine => Abstract_Relation.Inc_Ref (Self.SSM_Relation);
       end case;
    end Inc_Ref;
 
@@ -54,7 +166,7 @@ package body Langkit_Support.Adalog.Solver is
    begin
       case Self.Kind is
          when Symbolic => Sym_Solve.Dec_Ref (Self.Symbolic_Relation);
-         when State_Machine => raise Program_Error with "Not implemented";
+         when State_Machine => Abstract_Relation.Dec_Ref (Self.SSM_Relation);
       end case;
    end Dec_Ref;
 
@@ -71,7 +183,14 @@ package body Langkit_Support.Adalog.Solver is
       case Self.Kind is
          when Symbolic => Sym_Solve.Solve
               (Self.Symbolic_Relation, Solution_Callback, Solve_Options);
-         when State_Machine => raise Program_Error with "Not implemented";
+         when State_Machine =>
+            while Abstract_Relation.Solve (Self.SSM_Relation) loop
+               declare
+                  Ignore : Boolean := Solution_Callback.all;
+               begin
+                  null;
+               end;
+            end loop;
       end case;
    end Solve;
 
@@ -83,13 +202,30 @@ package body Langkit_Support.Adalog.Solver is
      (Self              : Relation;
       Solution_Callback : access function
         (Vars : Logic_Var_Array) return Boolean;
-      Solve_Options : Solve_Options_Type := Default_Options)
+      Solve_Options     : Solve_Options_Type := Default_Options)
    is
    begin
       case Self.Kind is
          when Symbolic => Sym_Solve.Solve
               (Self.Symbolic_Relation, Solution_Callback, Solve_Options);
-         when State_Machine => raise Program_Error with "Not implemented";
+         when State_Machine =>
+            while Abstract_Relation.Solve (Self.SSM_Relation) loop
+               declare
+                  Vars   : Logic_Var_Array (1 .. Positive (Self.Vars.Length));
+                  Ignore : Boolean;
+                  --  Call the callback with the vars that we accumulated in
+                  --  the wrapper during the building of the relation.
+                  use Var_Sets;
+                  I      : Positive := 1;
+               begin
+                  for El in Self.Vars.Iterate loop
+                     Vars (I) := Element (El);
+                     I := I + 1;
+                  end loop;
+
+                  Ignore := Solution_Callback (Vars);
+               end;
+            end loop;
       end case;
    end Solve;
 
@@ -107,7 +243,7 @@ package body Langkit_Support.Adalog.Solver is
             return Sym_Solve.Solve_First
               (Self.Symbolic_Relation, Solve_Options);
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            return Abstract_Relation.Solve (Self.SSM_Relation);
       end case;
    end Solve_First;
 
@@ -127,7 +263,14 @@ package body Langkit_Support.Adalog.Solver is
               (Symbolic,
                Sym_Solve.Create_Predicate (Logic_Var, Pred, Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            return Rel : Relation :=
+              (State_Machine,
+               SSM_Predicate.Create
+                 (Logic_Var, new Predicate_Type'Class'(Pred)),
+               Vars => <>)
+            do
+               Append_Var (Rel, Logic_Var);
+            end return;
       end case;
    end Create_Predicate;
 
@@ -147,7 +290,16 @@ package body Langkit_Support.Adalog.Solver is
               (Symbolic,
                Sym_Solve.Create_N_Predicate (Logic_Vars, Pred, Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            return Rel : Relation :=
+              (State_Machine,
+               SSM_N_Predicate.Create
+                 (Logic_Vars, new N_Predicate_Type'Class'(Pred)),
+               Vars => <>)
+            do
+               for Var of Logic_Vars loop
+                  Append_Var (Rel, Var);
+               end loop;
+            end return;
       end case;
    end Create_N_Predicate;
 
@@ -170,7 +322,30 @@ package body Langkit_Support.Adalog.Solver is
                Sym_Solve.Create_Assign
                  (Logic_Var, Value, Conv, Eq, Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            declare
+               C : Converter_Access := null;
+               E : Comparer_Access := null;
+            begin
+               if Conv /= No_Converter then
+                  C := new Converter_Type'Class'(Conv);
+               end if;
+
+               if Eq = No_Comparer then
+                  E := new Comparer_Type'Class'(Eq);
+               end if;
+
+               return Rel : Relation :=
+                 (State_Machine,
+                  SSM_Bind.Create
+                    (Logic_Var,
+                     Value,
+                     C, E,
+                     Debug_String),
+                  Vars => <>)
+               do
+                  Append_Var (Rel, Logic_Var);
+               end return;
+            end;
       end case;
    end Create_Assign;
 
@@ -187,7 +362,15 @@ package body Langkit_Support.Adalog.Solver is
             return Relation'
               (Symbolic, Sym_Solve.Create_Unify (From, To, Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            return Rel : Relation :=
+              (State_Machine,
+               SSM_Unify.Create
+                 (From, To, (null record), (null record), Debug_String),
+               Vars => <>)
+            do
+               Append_Var (Rel, From);
+               Append_Var (Rel, To);
+            end return;
       end case;
    end Create_Unify;
 
@@ -208,7 +391,31 @@ package body Langkit_Support.Adalog.Solver is
               (Symbolic,
                Sym_Solve.Create_Propagate (From, To, Conv, Eq, Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            declare
+               C : Converter_Access := null;
+               E : Comparer_Access := null;
+            begin
+               if Conv /= No_Converter then
+                  C := new Converter_Type'Class'(Conv);
+               end if;
+
+               if Eq = No_Comparer then
+                  E := new Comparer_Type'Class'(Eq);
+               end if;
+
+               return Rel : Relation :=
+                 (State_Machine,
+                  SSM_Bind.Create
+                    (From,
+                     To,
+                     C, E,
+                     Debug_String),
+                  Vars => <>)
+               do
+                  Append_Var (Rel, From);
+                  Append_Var (Rel, To);
+               end return;
+            end;
       end case;
    end Create_Propagate;
 
@@ -227,7 +434,16 @@ package body Langkit_Support.Adalog.Solver is
               (Symbolic,
                Sym_Solve.Create_Domain (Logic_Var, Domain, Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            return Rel : Relation :=
+              (State_Machine,
+               SSM_Unify.Impl.Member
+                 (Logic_Var,
+                  SSM_Unify.Impl.Unify_Left.R_Type_Array (Domain)),
+               Vars => <>)
+            do
+               Append_Var (Rel, Logic_Var);
+            end return;
+
       end case;
    end Create_Domain;
 
@@ -239,19 +455,41 @@ package body Langkit_Support.Adalog.Solver is
      (Relations : Relation_Array; Debug_String : String_Access := null)
       return Relation
    is
-      Internal_Rels : Sym_Solve.Relation_Array (Relations'Range);
+
    begin
-      for J in Relations'Range loop
-         Internal_Rels (J) := Relations (J).Symbolic_Relation;
-      end loop;
 
       case Global_Kind is
          when Symbolic =>
-            return Relation'
-              (Symbolic,
-               Sym_Solve.Create_Any (Internal_Rels, Debug_String));
+            declare
+               Internal_Rels : Sym_Solve.Relation_Array (Relations'Range);
+            begin
+               for J in Relations'Range loop
+                  Internal_Rels (J) := Relations (J).Symbolic_Relation;
+               end loop;
+               return Relation'
+                 (Symbolic,
+                  Sym_Solve.Create_Any (Internal_Rels, Debug_String));
+            end;
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            declare
+               Internal_Rels : Abstract_Relation.Relation_Array
+                 (Relations'Range);
+               use Var_Sets;
+            begin
+               return Rel : Relation (State_Machine) do
+
+                  for J in Relations'Range loop
+                     Internal_Rels (J) := Relations (J).SSM_Relation;
+                     if Relations (J).Vars /= null then
+                        for El in Relations (J).Vars.Iterate loop
+                           Append_Var (Rel, Element (El));
+                        end loop;
+                     end if;
+                  end loop;
+
+                  Rel.SSM_Relation := Operations.Logic_Any (Internal_Rels);
+               end return;
+            end;
       end case;
    end Create_Any;
 
@@ -263,19 +501,41 @@ package body Langkit_Support.Adalog.Solver is
      (Relations : Relation_Array; Debug_String : String_Access := null)
       return Relation
    is
-      Internal_Rels : Sym_Solve.Relation_Array (Relations'Range);
    begin
-      for J in Relations'Range loop
-         Internal_Rels (J) := Relations (J).Symbolic_Relation;
-      end loop;
 
       case Global_Kind is
          when Symbolic =>
-            return Relation'
-              (Symbolic,
-               Sym_Solve.Create_All (Internal_Rels, Debug_String));
+            declare
+               Internal_Rels : Sym_Solve.Relation_Array (Relations'Range);
+            begin
+               for J in Relations'Range loop
+                  Internal_Rels (J) := Relations (J).Symbolic_Relation;
+               end loop;
+
+               return Relation'
+                 (Symbolic,
+                  Sym_Solve.Create_All (Internal_Rels, Debug_String));
+            end;
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            declare
+               Internal_Rels : Abstract_Relation.Relation_Array
+                 (Relations'Range);
+               use Var_Sets;
+            begin
+               return Rel : Relation (State_Machine) do
+
+                  for J in Relations'Range loop
+                     Internal_Rels (J) := Relations (J).SSM_Relation;
+                     if Relations (J).Vars /= null then
+                        for El in Relations (J).Vars.Iterate loop
+                           Append_Var (Rel, Element (El));
+                        end loop;
+                     end if;
+                  end loop;
+
+                  Rel.SSM_Relation := Operations.Logic_All (Internal_Rels);
+               end return;
+            end;
       end case;
    end Create_All;
 
@@ -292,7 +552,8 @@ package body Langkit_Support.Adalog.Solver is
               (Symbolic,
                Sym_Solve.Create_True (Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            return Relation'
+              (State_Machine, Pure_Relations.True_Rel, Vars => <>);
       end case;
    end Create_True;
 
@@ -309,7 +570,8 @@ package body Langkit_Support.Adalog.Solver is
               (Symbolic,
                Sym_Solve.Create_False (Debug_String));
          when State_Machine =>
-            return raise Program_Error with "Not implemented";
+            return Relation'
+              (State_Machine, Pure_Relations.False_Rel, Vars => <>);
       end case;
    end Create_False;
 
@@ -317,27 +579,15 @@ package body Langkit_Support.Adalog.Solver is
    -- Image --
    -----------
 
-   function Image (Self : Relation; Level : Natural := 0) return String is
+   function Image (Self : Relation) return String is
    begin
       case Self.Kind is
          when Symbolic =>
-            return Sym_Solve.Image (Self.Symbolic_Relation, Level);
-         when State_Machine => raise Program_Error with "Not implemented";
+            return Sym_Solve.Image (Self.Symbolic_Relation);
+         when State_Machine =>
+            return "<not implemented>";
       end case;
    end Image;
-
-   --------------------
-   -- Relation_Image --
-   --------------------
-
-   function Relation_Image (Self : Relation) return String is
-   begin
-      case Self.Kind is
-         when Symbolic =>
-            return Sym_Solve.Relation_Image (Self.Symbolic_Relation);
-         when State_Machine => raise Program_Error with "Not implemented";
-      end case;
-   end Relation_Image;
 
    --------------------
    -- Print_Relation --
@@ -347,8 +597,9 @@ package body Langkit_Support.Adalog.Solver is
    begin
       case Self.Kind is
          when Symbolic =>
-            Sym_Solve.Print_Relation (Self.Symbolic_Relation);
-         when State_Machine => raise Program_Error with "Not implemented";
+            Put_Line (Sym_Solve.Image (Self.Symbolic_Relation));
+         when State_Machine =>
+            Abstract_Relation.Print_Relation (Self.SSM_Relation);
       end case;
    end Print_Relation;
 
