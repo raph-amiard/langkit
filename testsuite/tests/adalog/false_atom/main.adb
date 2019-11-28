@@ -10,7 +10,7 @@ use Langkit_Support.Adalog.Main_Support;
 procedure Main is
    use T_Solver;
    use Refs;
-   R : constant Relation := Create_False;
+   R : constant Relation := Logic_False;
 begin
    Solve_All (R, Show_Relation => True);
 end Main;

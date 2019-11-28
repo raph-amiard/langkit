@@ -67,7 +67,7 @@ package Langkit_Support.Adalog.Symbolic_Solver is
         (Vars : Logic_Var_Array) return Boolean;
       Solve_Options     : Solve_Options_Type := Default_Options);
    --  Tries to solve ``Self``. For every solution, ``Solution_Callback`` will
-   --  be called.
+   --  be called. If ``Solution_Callback`` returns False, stop solving.
 
    function Solve_First
      (Self          : Relation;

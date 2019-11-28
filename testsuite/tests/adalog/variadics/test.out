@@ -1,3 +1,6 @@
+Solving with new solver
+=======================
+
 Solving relation:
 All: 
     Any: 
@@ -17,3 +20,20 @@ All:
 
 Solution: [%Y = 12, %X = 4]
 Solution: [%Y = 18, %X = 6]
+Solving with old solver
+=======================
+
+Solving relation:
+<All>:
+| | <Any>:
+| | | | Unify %X <= 1
+| | | | Unify %X <= 2
+| | | | Unify %X <= 3
+| | | | Unify %X <= 4
+| | | | Unify %X <= 5
+| | | | Unify %X <= 6
+| | Bind %X <=> %Y 
+| | Predicate Is_Even on %X
+| | Member %Y {12, 18}
+Solution: [%X = 4, %Y = 12]
+Solution: [%X = 6, %Y = 18]

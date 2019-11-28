@@ -1,3 +1,6 @@
+Solving with new solver
+=======================
+
 Solving relation:
 All: 
     Any: 
@@ -12,3 +15,11 @@ All:
     Is_Odd?(%X) 
 
 Solution: [%X = 1]
+Solving with old solver
+=======================
+
+Solving relation:
+<All>:
+| | Member %X {1, 2, 3, 4, 5, 6}
+| | Unify %X <= 1 
+| | Predicate Is_Odd on %X

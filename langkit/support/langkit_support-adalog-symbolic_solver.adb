@@ -1083,6 +1083,11 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
       Last_Vars : Var_Array_Access := null;
       Last_Vals : Val_Array_Access := null;
 
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Var_Array, Var_Array_Access);
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Val_Array, Val_Array_Access);
+
       --------------
       -- Callback --
       --------------
@@ -1104,6 +1109,8 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
             Set_Value (Last_Vars (I), Last_Vals (I));
          end loop;
       end if;
+      Free (Last_Vars);
+      Free (Last_Vals);
       return Ret;
    end Solve_First;
 
@@ -1382,6 +1389,11 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
       if Rels.Length = 1 then
          return Ret : constant Relation := Rels.Get (1) do
             Rels.Destroy;
+            declare
+               D : String_Access := Debug_String;
+            begin
+               Free (D);
+            end;
          end return;
       end if;
 
@@ -1421,6 +1433,7 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
                Destroy (Self.Conv.all);
             end if;
             Free (Self.Conv);
+
          when Predicate =>
             Destroy (Self.Pred.all);
             Free (Self.Pred);

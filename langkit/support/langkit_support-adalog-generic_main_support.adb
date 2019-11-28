@@ -46,6 +46,7 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
 
    function "+" (R : Relation) return Relation is
    begin
+      Put_Line ("Appending relation " & Image (R));
       Relations.Append (R);
       return R;
    end "+";
@@ -90,43 +91,50 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
          (Cut_Dead_Branches => True));
    end Solve_All;
 
-   package Control is
-      type C is new Ada.Finalization.Controlled with record
-         Destroyed : Boolean := False;
-      end record;
-      overriding procedure Finalize (Self : in out C);
+   ---------
+   -- "-" --
+   ---------
 
-      Dummy_Finalize : Control.C;
-   end Control;
+   function "-" (S : String) return String_Access is
+   begin
+      return Ret : constant String_Access := new String'(S) do
+         --           Strings.Append (Ret);
+         null;
+      end return;
+   end "-";
 
-   package body Control is
+   --------------
+   -- Finalize --
+   --------------
 
-      --------------
-      -- Finalize --
-      --------------
+   procedure Finalize is
+      Used : Boolean := False;
+   begin
+      Put_Line ("==================== IN FINALIZE =====================");
+      if not Destroyed then
+         for R of Relations loop
+            Used := True;
+            Put_Line ("Destroying relation " & Image (R));
+            Dec_Ref (R);
+         end loop;
 
-      overriding procedure Finalize (Self : in out C) is
-         Used : Boolean := False;
-      begin
-         if not Self.Destroyed then
-            for R of Relations loop
-               Used := True;
-               Dec_Ref (R);
-            end loop;
+         for V of Variables loop
+            Refs.Destroy (V.all);
+            Refs.Free (V);
+         end loop;
 
-            for V of Variables loop
-               Refs.Destroy (V.all);
-               Refs.Free (V);
-            end loop;
+         for S of Strings loop
+            Free (S);
+         end loop;
 
-            Relations := Relation_Vectors.Empty_Vector;
-            Self.Destroyed := True;
-            if Used then
-               Put_Line ("Done.");
-            end if;
+         Relations := Relation_Vectors.Empty_Vector;
+         Destroyed := True;
+
+         if Used then
+            Put_Line ("Done.");
          end if;
-      end Finalize;
-   end Control;
+      end if;
+   end Finalize;
 
    package Env renames Ada.Environment_Variables;
 begin

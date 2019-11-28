@@ -1,3 +1,6 @@
+Solving with new solver
+=======================
+
 Solving relation:
 Any: 
     All: 
@@ -12,3 +15,17 @@ Any:
 
 Solution: [%Y = 1, %X = 1]
 Solution: [%Y = 12, %X = 3]
+Solving with old solver
+=======================
+
+Solving relation:
+<Any>:
+| | <All>:
+| | | | Bind %X <=> %Y
+| | | | Unify %X <= 1
+| | | | Unify %Y <= 1
+| | <All>:
+| | | | Unify %X <= 3
+| | | | Unify %Y <= 12
+Solution: [%X = 1, %Y = 1]
+Solution: [%X = 3, %Y = 12]

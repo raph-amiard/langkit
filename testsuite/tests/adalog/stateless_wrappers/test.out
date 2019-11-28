@@ -1,3 +1,6 @@
+Solving with new solver
+=======================
+
 Solving relation:
 All: 
     Any: 
@@ -39,3 +42,20 @@ All:
 Solution: [%y = -1, %x = 1]
 Solution: [%y = -3, %x = 3]
 Solution: [%y = -5, %x = 5]
+Solving with old solver
+=======================
+
+Solving relation:
+<All>:
+| | Member %x {1, 2, 3, 4, 5, 6}
+| | Bind %x <=> %y 
+| | Predicate is_odd on %x
+Solution: [%x = 1, %y = 2]
+Solution: [%x = 3, %y = 6]
+Solution: [%x = 5, %y = 10]
+Solving relation:
+<All>:
+| | Bind %x <=> %y 
+| | Member %x {1, 2, 3, 4, 5, 6}
+| | Member %y {-1, -2, -3, -4, -5, -6}
+| | Predicate is_odd on %x

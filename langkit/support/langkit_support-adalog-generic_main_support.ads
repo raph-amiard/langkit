@@ -21,14 +21,14 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
---  Provide common support material for unit tests
+--  Provide common support material for Adalog unit tests
 
 with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Langkit_Support.Adalog.Logic_Ref;
 with Langkit_Support.Adalog.Solver_Interface;
 with Langkit_Support.Adalog.Solver;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 generic
    type T is private;
@@ -49,7 +49,7 @@ package Langkit_Support.Adalog.Generic_Main_Support is
    --  Register R and return it. This is used to keep track of allocated
    --  relations in testcases.
 
-   function "-" (S : String) return String_Access is (new String'(S));
+   function "-" (S : String) return String_Access;
 
    function R_All
      (Rels : Relation_Array; Dbg_String : String := "") return Relation
@@ -86,9 +86,9 @@ package Langkit_Support.Adalog.Generic_Main_Support is
    is (+Create_Unify (L, R, -Dbg_String));
 
    function Assign
-     (L    : Refs.Raw_Var;
-      R    : T;
-      Conv : Converter_Type'Class := No_Converter;
+     (L          : Refs.Raw_Var;
+      R          : T;
+      Conv       : Converter_Type'Class := No_Converter;
       Eq         : Comparer_Type'Class := No_Comparer;
       Dbg_String : String := "") return Relation
    is
@@ -108,9 +108,15 @@ package Langkit_Support.Adalog.Generic_Main_Support is
    is
      (+Create_N_Predicate (Vars, P, -Dbg_String));
 
+   function Logic_False return Relation is (+Create_False);
+   function Logic_True return Relation is (+Create_True);
+
    procedure Solve_All (Rel : Relation; Show_Relation : Boolean := False);
 
+   procedure Finalize;
 private
+
+   Destroyed : Boolean := False;
 
    package Relation_Vectors is new Ada.Containers.Vectors
      (Positive, Relation);
@@ -118,7 +124,11 @@ private
    package Variable_Vectors is new Ada.Containers.Vectors
      (Positive, Refs.Raw_Var, Refs."=");
 
+   package String_Access_Vectors is new Ada.Containers.Vectors
+     (Positive, String_Access);
+
    Relations : Relation_Vectors.Vector;
    Variables : Variable_Vectors.Vector;
+   Strings   : String_Access_Vectors.Vector;
 
 end Langkit_Support.Adalog.Generic_Main_Support;

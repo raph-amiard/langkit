@@ -1,3 +1,12 @@
+Solving with new solver
+=======================
+
 Solving relation:
 12 -> %X
+Solution: [%X = 12]
+Solving with old solver
+=======================
+
+Solving relation:
+Unify %X <= 12
 Solution: [%X = 12]

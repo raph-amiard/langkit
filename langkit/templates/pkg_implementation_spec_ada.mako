@@ -25,6 +25,7 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Langkit_Support.Adalog.Logic_Ref;
 with Langkit_Support.Adalog.Solver;
+with Langkit_Support.Adalog.Solver_Interface;
 
 with Langkit_Support.Bump_Ptr;    use Langkit_Support.Bump_Ptr;
 with Langkit_Support.Cheap_Sets;
@@ -478,8 +479,9 @@ private package ${ada_lib_name}.Implementation is
 
    package Entity_Vars is new Langkit_Support.Adalog.Logic_Ref
      (${T.entity.name}, Element_Image => Image);
-   package Solver is new Langkit_Support.Adalog.Solver
+   package Solver_Ifc is new Langkit_Support.Adalog.Solver_Interface
      (Entity_Vars.Raw_Logic_Var);
+   package Solver is new Langkit_Support.Adalog.Solver (Solver_Ifc);
 
    subtype Logic_Var is Entity_Vars.Raw_Var;
    subtype Logic_Var_Record is Entity_Vars.Var;
