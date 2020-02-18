@@ -48,6 +48,8 @@ package Langkit_Support.Adalog.Solver is
    --  A relation is manually ref-counted, and owns every sub-relation. When
    --  the ref-count reaches 0, every sub-relation is destroyed.
 
+   No_Relation : constant Relation;
+
    procedure Inc_Ref (Self : Relation);
    --  Increments the reference count of Self
 
@@ -160,7 +162,8 @@ package Langkit_Support.Adalog.Solver is
    function Image (Self : Relation) return String;
    procedure Print_Relation (Self : Relation);
 
-   type Solver_Kind is (State_Machine, Symbolic);
+   type Solver_Kind is (State_Machine, Symbolic, None);
+   subtype Valid_Solver_Kind is Solver_Kind range State_Machine .. Symbolic;
 
    procedure Set_Kind (Kind : Solver_Kind);
 
@@ -188,8 +191,11 @@ private
             --  solver, since it doesn't and we need them to implement the
             --  version of ``Solve`` that takes the array of variables in
             --  the callback. If ``Debug`` is False, it isn't used.
+         when None => null;
       end case;
    end record;
+
+   No_Relation : constant Relation := (Kind => None);
 
    No_Relation_Array : constant Relation_Array (1 .. 0) := (others => <>);
 

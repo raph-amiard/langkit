@@ -135,7 +135,7 @@ package body Langkit_Support.Adalog.Solver is
       end if;
    end Append_Var;
 
-   Global_Kind : Solver_Kind := Symbolic;
+   Global_Kind : Valid_Solver_Kind := Symbolic;
 
    --------------
    -- Set_Kind --
@@ -155,6 +155,7 @@ package body Langkit_Support.Adalog.Solver is
       case Self.Kind is
          when Symbolic => Sym_Solve.Inc_Ref (Self.Symbolic_Relation);
          when State_Machine => Abstract_Relation.Inc_Ref (Self.SSM_Relation);
+         when None => null;
       end case;
    end Inc_Ref;
 
@@ -167,6 +168,7 @@ package body Langkit_Support.Adalog.Solver is
       case Self.Kind is
          when Symbolic => Sym_Solve.Dec_Ref (Self.Symbolic_Relation);
          when State_Machine => Abstract_Relation.Dec_Ref (Self.SSM_Relation);
+         when None => null;
       end case;
    end Dec_Ref;
 
@@ -191,6 +193,7 @@ package body Langkit_Support.Adalog.Solver is
                   null;
                end;
             end loop;
+         when None => raise Constraint_Error with "Cannot solve No_Relation";
       end case;
    end Solve;
 
@@ -226,6 +229,7 @@ package body Langkit_Support.Adalog.Solver is
                   Ignore := Solution_Callback (Vars);
                end;
             end loop;
+         when None => raise Constraint_Error with "Cannot solve No_Relation";
       end case;
    end Solve;
 
@@ -244,6 +248,7 @@ package body Langkit_Support.Adalog.Solver is
               (Self.Symbolic_Relation, Solve_Options);
          when State_Machine =>
             return Abstract_Relation.Solve (Self.SSM_Relation);
+         when None => raise Constraint_Error with "Cannot solve No_Relation";
       end case;
    end Solve_First;
 
@@ -586,6 +591,7 @@ package body Langkit_Support.Adalog.Solver is
             return Sym_Solve.Image (Self.Symbolic_Relation);
          when State_Machine =>
             return "<not implemented>";
+         when None => return "<No relation>";
       end case;
    end Image;
 
@@ -600,6 +606,7 @@ package body Langkit_Support.Adalog.Solver is
             Put_Line (Sym_Solve.Image (Self.Symbolic_Relation));
          when State_Machine =>
             Abstract_Relation.Print_Relation (Self.SSM_Relation);
+         when None => null;
       end case;
    end Print_Relation;
 

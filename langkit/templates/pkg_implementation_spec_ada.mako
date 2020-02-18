@@ -489,7 +489,7 @@ private package ${ada_lib_name}.Implementation is
    Null_Var_Record : constant Logic_Var_Record := (Reset => True, others => <>);
 
    subtype Logic_Equation is Solver.Relation;
-   Null_Logic_Equation : constant Logic_Equation := null;
+   Null_Logic_Equation : constant Logic_Equation := Solver.No_Relation;
 
    % if ctx.properties_logging:
       function Trace_Image (K : Analysis_Unit_Kind) return String;
