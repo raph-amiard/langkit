@@ -55,7 +55,7 @@ generic
    --  Checks whether the logic variable has a value or not
 
    with procedure Set_Value
-     (Self : in out Logic_Var_Type; Data : Element_Type) is <>;
+     (Self : Logic_Var_Type; Data : Element_Type) is <>;
    --  Set the value of the logic variable to Data. Low level function, not for
    --  use by clients.
 

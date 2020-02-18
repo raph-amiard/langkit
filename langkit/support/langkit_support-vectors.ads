@@ -199,7 +199,7 @@ package Langkit_Support.Vectors is
    procedure Generic_Sort (Self : in out Vector);
    --  Sort elements in Self so that Self.Element (1) < Self.Element (2) < ...
 
-   procedure Reserve (Self : in out Vector; Capacity : Positive)
+   procedure Reserve (Self : in out Vector; Capacity : Natural)
      with Inline;
    --  Reserve Capacity elements
 
