@@ -203,7 +203,7 @@
       % endif
 
       % if arity > 1:
-      Entity : Solver.Value_Type := Entities (1);
+      Entity : Solver_Ifc.Value_Type := Entities (1);
       % endif
       <% node0_type = formal_node_types[0] %>
       Node : constant ${node0_type.name} := Entity.Node;
