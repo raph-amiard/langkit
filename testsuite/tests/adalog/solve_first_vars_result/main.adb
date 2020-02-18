@@ -5,7 +5,7 @@ use Langkit_Support.Adalog.Main_Support;
 
 with Langkit_Support.Images; use Langkit_Support.Images;
 
---  Check that vars are defined and have correct values after Solve_First.
+--  Check that vars are defined and have correct values after Solve_First
 
 procedure Main is
    use T_Solver; use Refs;

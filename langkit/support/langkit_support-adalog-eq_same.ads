@@ -95,9 +95,6 @@ package Langkit_Support.Adalog.Eq_Same is
       Convert_Image : String := "";
       Equals_Image  : String := "";
 
-      --  with procedure Free (Self : in out Converter) is null;
-      --  with procedure Free (Self : in out Equals_Data) is null;
-
       One_Side_Convert : Boolean := False;
 
    package Raw_Custom_Bind is

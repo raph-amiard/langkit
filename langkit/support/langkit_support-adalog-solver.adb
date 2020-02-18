@@ -21,12 +21,12 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
-with Langkit_Support.Adalog.Predicates;
 with Langkit_Support.Adalog.Operations;
+with Langkit_Support.Adalog.Predicates;
 with Langkit_Support.Adalog.Pure_Relations;
 
-with Ada.Unchecked_Deallocation;
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 
 package body Langkit_Support.Adalog.Solver is
 

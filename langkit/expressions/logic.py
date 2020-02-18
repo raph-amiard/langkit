@@ -15,8 +15,8 @@ from langkit.compiled_types import Argument, T, no_compiled_type
 from langkit.diagnostics import check_multiple, check_source_language
 from langkit.expressions.base import (
     AbstractExpression, CallExpr, ComputingExpr, DynamicVariable, LiteralExpr,
-    NullExpr, PropertyDef, ResolvedExpression, Self, aggregate_expr, auto_attr,
-    construct, dsl_document, render, resolve_property, sloc_info_arg
+    NullExpr, PropertyDef, Self, aggregate_expr, auto_attr, construct,
+    dsl_document, render, resolve_property, sloc_info_arg
 )
 
 

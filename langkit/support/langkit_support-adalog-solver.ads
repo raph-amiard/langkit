@@ -22,13 +22,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Hash;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Langkit_Support.Adalog.Solver_Interface;
-with Langkit_Support.Adalog.Eq_Same;
-private with Langkit_Support.Adalog.Symbolic_Solver;
 with Langkit_Support.Adalog.Abstract_Relation;
+with Langkit_Support.Adalog.Eq_Same;
+with Langkit_Support.Adalog.Solver_Interface;
+private with Langkit_Support.Adalog.Symbolic_Solver;
 
 generic
    with package Solver_Ifc

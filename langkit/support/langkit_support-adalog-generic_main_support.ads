@@ -27,8 +27,8 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Langkit_Support.Adalog.Logic_Ref;
-with Langkit_Support.Adalog.Solver_Interface;
 with Langkit_Support.Adalog.Solver;
+with Langkit_Support.Adalog.Solver_Interface;
 
 generic
    type T is private;

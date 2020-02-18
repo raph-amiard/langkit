@@ -6,7 +6,7 @@ with GNATCOLL.Traces;
 with Langkit_Support.Adalog.Main_Support;
 use Langkit_Support.Adalog.Main_Support;
 
---  Test that an atomic boolean rel solves correctly. No !
+--  Test that indirect (chained) aliasing works correctly
 
 procedure Main is
    use T_Solver;
@@ -19,7 +19,7 @@ procedure Main is
 
    R : constant Relation :=
        R_All (
-         (X = Y, 
+         (X = Y,
           Y_Ind = 2,
           Y = Y_Ind,
           Expr = 1,

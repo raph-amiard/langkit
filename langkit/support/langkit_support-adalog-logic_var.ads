@@ -86,7 +86,7 @@ generic
    with procedure Unalias (Self : Logic_Var_Type) is <>;
 
    with function Get_Alias (Self : Logic_Var_Type) return Logic_Var_Type is <>;
-   --  Get the alias for this logic variable, if there is one.
+   --  Get the alias for this logic variable, if there is one
 
    No_Var : Logic_Var_Type;
 package Langkit_Support.Adalog.Logic_Var is

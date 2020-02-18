@@ -21,9 +21,9 @@ if not with_gnatpython:
 # pyflakes on
 
 
+import testsuite_support.adalog_driver
 import testsuite_support.langkit_support_driver
 import testsuite_support.python_driver
-import testsuite_support.adalog_driver
 
 
 class Testsuite(BaseTestsuite):

@@ -1030,7 +1030,7 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
                end if;
             elsif Solve_Atomic (Self.Atomic_Rel) then
                --  Solve with empty vars array. TODO: Maybe try to factor that
-               --  code ?
+               --  code?
                Ignore := Solution_Callback ((1 .. 0 => <>));
             end if;
 
