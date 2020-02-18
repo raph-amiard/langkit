@@ -142,15 +142,15 @@
       overriding function Call
         (Self       : ${type_name};
         % if arity == 1:
-        Entity  : Solver.Value_Type
+        Entity  : Solver_Ifc.Value_Type
         % else:
-        Entities : Solver.Value_Array
+        Entities : Solver_Ifc.Value_Array
         % endif
         ) return Boolean
    </%def>
 
    type ${type_name} is
-   new ${"Predicate_Type" if arity == 1 else "N_Predicate_Type"}
+   new Solver_Ifc.${"Predicate_Type" if arity == 1 else "N_Predicate_Type"}
    with record
       % for i, arg_type in args:
          Field_${i} : ${arg_type.name};
