@@ -47,3 +47,4 @@ Solving relation:
 | | Member %Y {15, 16, 16, 18, 19}
 Solution: [%X = 12, %Y = 15]
 Solution: [%X = 18, %Y = 18]
+Done.

@@ -10,3 +10,4 @@ Solving with old solver
 Solving relation:
 Unify %X <= 12
 Solution: [%X = 12]
+Done.

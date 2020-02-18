@@ -107,3 +107,4 @@ Solving relation:
 | | Predicate Is_Even on %X
 | | Bind %X <=> %Y
 Solution: [%X = 2, %Y = 2]
+Done.

@@ -17,3 +17,4 @@ Solving relation:
 | | Unify %Y <= 1
 | | PREDICATE Is_Double_Of ON %X%Y
 Solution: [%X = 2, %Y = 1]
+Done.

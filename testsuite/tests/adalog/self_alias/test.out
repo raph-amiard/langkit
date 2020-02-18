@@ -17,3 +17,4 @@ Solving relation:
 | | Unify %X <= 1
 | | Unify %Y <= 1
 Solution: [%X = 1, %Y = 1]
+Done.

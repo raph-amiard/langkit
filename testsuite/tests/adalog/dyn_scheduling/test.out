@@ -133,3 +133,4 @@ Solving relation:
 | | Predicate Is_Even on %Y
 | | Member %X {1, 2, 3}
 Resolution failed with Early_Binding_Error
+Done.

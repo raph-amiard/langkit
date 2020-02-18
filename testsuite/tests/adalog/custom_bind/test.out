@@ -51,3 +51,4 @@ Solving relation:
 | | Member %X {1, 2, 3, 4, 5, 6}
 | | Bind %X <=> %Y 
 | | Unify %Y <= 36
+Done.
