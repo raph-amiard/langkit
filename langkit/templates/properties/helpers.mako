@@ -35,7 +35,7 @@
    %>
 
    ${dynamic_vars_holder_decl(
-         type_name, "Solver.Converter_Type", conv_prop.dynamic_vars
+         type_name, "Solver_Ifc.Converter_Type", conv_prop.dynamic_vars
      )}
 
    overriding function Convert
@@ -74,7 +74,7 @@
    %>
 
    ${dynamic_vars_holder_decl(
-         type_name, "Solver.Comparer_Type", eq_prop.dynamic_vars
+         type_name, "Solver_Ifc.Comparer_Type", eq_prop.dynamic_vars
      )}
 
    overriding function Image (Self : ${type_name}) return String;
