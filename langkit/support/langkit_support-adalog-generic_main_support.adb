@@ -46,7 +46,6 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
 
    function "+" (R : Relation) return Relation is
    begin
-      Put_Line ("Appending relation " & Image (R));
       Relations.Append (R);
       return R;
    end "+";
@@ -110,11 +109,9 @@ package body Langkit_Support.Adalog.Generic_Main_Support is
    procedure Finalize is
       Used : Boolean := False;
    begin
-      Put_Line ("==================== IN FINALIZE =====================");
       if not Destroyed then
          for R of Relations loop
             Used := True;
-            Put_Line ("Destroying relation " & Image (R));
             Dec_Ref (R);
          end loop;
 
