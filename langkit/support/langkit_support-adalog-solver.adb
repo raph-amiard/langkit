@@ -135,7 +135,7 @@ package body Langkit_Support.Adalog.Solver is
       end if;
    end Append_Var;
 
-   Global_Kind : Valid_Solver_Kind := Symbolic;
+   Global_Kind : Valid_Solver_Kind := Default_Solver_Kind;
 
    --------------
    -- Set_Kind --

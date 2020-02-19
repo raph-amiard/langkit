@@ -165,6 +165,8 @@ package Langkit_Support.Adalog.Solver is
    type Solver_Kind is (State_Machine, Symbolic, None);
    subtype Valid_Solver_Kind is Solver_Kind range State_Machine .. Symbolic;
 
+   Default_Solver_Kind : Valid_Solver_Kind := State_Machine;
+
    procedure Set_Kind (Kind : Solver_Kind);
 
 private
