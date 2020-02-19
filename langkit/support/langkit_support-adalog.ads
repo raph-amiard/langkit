@@ -33,6 +33,13 @@ package Langkit_Support.Adalog is
    --  Exception raised when the resolution of a complex relation exceeded the
    --  number of steps allowed.
 
+   type Solver_Kind is (State_Machine, Symbolic, None);
+   --  Different kind of solvers available in Adalog. ``None`` is for no
+   --  solver.
+
+   subtype Valid_Solver_Kind is Solver_Kind range State_Machine .. Symbolic;
+   --  Kind subtype for valid solver kinds.
+
    Solver_Trace : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
      ("LANGKIT.SOLVER", Default => GNATCOLL.Traces.From_Config);
 

@@ -21,6 +21,7 @@ with GNATCOLL.Refcount;
 % if any(s.exposed and not s.is_entity_type for s in ctx.struct_types):
    private with Langkit_Support.Boxes;
 % endif
+with Langkit_Support.Adalog;
 
 with ${ada_lib_name}.Common; use ${ada_lib_name}.Common;
 use ${ada_lib_name}.Common.Token_Data_Handlers;
@@ -238,6 +239,9 @@ package ${ada_lib_name}.Analysis is
    procedure Set_Logic_Resolution_Timeout
      (Context : Analysis_Context'Class; Timeout : Natural);
    ${ada_doc('langkit.context_set_logic_resolution_timeout', 3)}
+
+   procedure Set_Solver_Kind (Kind : Langkit_Support.Adalog.Solver_Kind);
+   --  Set the library's solver kind
 
    procedure Disable_Lookup_Cache (Disable : Boolean := True);
    --  Debug helper: if ``Disable`` is true, disable the use of caches in
