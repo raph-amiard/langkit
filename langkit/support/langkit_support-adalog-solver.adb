@@ -74,7 +74,7 @@ package body Langkit_Support.Adalog.Solver is
    function Image (Self : Converter_Access) return String is
      (if Self = null then "" else Self.Image);
 
-   package SSM_Bind is new SSM_Solve.Raw_Custom_Bind
+   package SSM_Bind_One_Side is new SSM_Solve.Raw_Custom_Bind
      (Converter        => Converter_Access,
       No_Data          => null,
       Equals_Data      => Comparer_Access,
@@ -82,6 +82,15 @@ package body Langkit_Support.Adalog.Solver is
       Convert          => Convert,
       Equals           => Equals,
       One_Side_Convert => True);
+
+   package SSM_Bind is new SSM_Solve.Raw_Custom_Bind
+     (Converter        => Default_Converter,
+      No_Data          => (null record),
+      Equals_Data      => Comparer_Access,
+      No_Equals_Data   => null,
+      Convert          => Convert,
+      Equals           => Equals,
+      One_Side_Convert => False);
 
    ---------------------------
    -- SSM Predicate wrapper --
@@ -349,7 +358,7 @@ package body Langkit_Support.Adalog.Solver is
 
                return Rel : Relation :=
                  (State_Machine,
-                  SSM_Bind.Create
+                  SSM_Bind_One_Side.Create
                     (Logic_Var,
                      Value,
                      C, E,
@@ -416,18 +425,28 @@ package body Langkit_Support.Adalog.Solver is
                   E := new Comparer_Type'Class'(Eq);
                end if;
 
-               Solver_Trace.Trace ("Eq image:" & Eq.Image);
-               Solver_Trace.Trace ("Conv image:" & Conv.Image);
-
-               return Rel : Relation :=
-                 (State_Machine,
-                  SSM_Bind.Create
-                    (From,
-                     To,
-                     C, E,
-                     Debug_String),
-                  Vars => <>)
+               return Rel : Relation
                do
+                  if C = null then
+                     Rel :=
+                       (State_Machine,
+                        SSM_Bind.Create
+                          (From,
+                           To,
+                           (null record), E,
+                           Debug_String),
+                        Vars => <>);
+                  else
+                     Rel :=
+                       (State_Machine,
+                        SSM_Bind_One_Side.Create
+                          (From,
+                           To,
+                           C, E,
+                           Debug_String),
+                        Vars => <>);
+                  end if;
+
                   Append_Var (Rel, From);
                   Append_Var (Rel, To);
                end return;
