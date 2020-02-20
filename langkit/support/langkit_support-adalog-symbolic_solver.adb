@@ -1214,10 +1214,10 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
                                 New_Dbg_Info);
             Ret    : constant Relation :=
               Create_All
-                ((Ass, N_Pred), Debug_String => Debug_String);
+                ((Create_Any ((Ass, Create_True)), N_Pred),
+                  Debug_String => Debug_String);
          begin
             Ass.Debug_Info := New_Dbg_Info;
-            Ass.Atomic_Rel.Can_Fail := True;
             Dec_Ref (N_Pred);
             Dec_Ref (Ass);
             return Ret;
@@ -1273,10 +1273,10 @@ package body Langkit_Support.Adalog.Symbolic_Solver is
                                   Comparer_N_Pred'(Eq => Eq, Conv => Conv),
                                   New_Dbg_Info);
             Ret    : constant Relation := Create_All
-              ((Propag, N_Pred), Debug_String => Debug_String);
+              ((Create_Any ((Propag, Create_True)), N_Pred),
+               Debug_String => Debug_String);
          begin
             Propag.Debug_Info := New_Dbg_Info;
-            Propag.Atomic_Rel.Can_Fail := True;
             Dec_Ref (N_Pred);
             Dec_Ref (Propag);
             return Ret;
