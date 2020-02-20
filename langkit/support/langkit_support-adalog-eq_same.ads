@@ -52,7 +52,9 @@ package Langkit_Support.Adalog.Eq_Same is
    function Convert
      (C_Data : Dummy_Convert_Data;
       From   : Value_Type) return Value_Type
-      with Inline;
+     with Inline;
+
+   function Image (Dummy : Dummy_Convert_Data) return String is ("");
 
    type Dummy_Equals_Data is null record;
    No_Equals_Data : constant Dummy_Equals_Data := (null record);
@@ -60,6 +62,8 @@ package Langkit_Support.Adalog.Eq_Same is
    function Equals
      (Dummy_Data : Dummy_Equals_Data; L, R : Value_Type) return Boolean
    is (L = R);
+
+   function Image (Dummy_Data : Dummy_Equals_Data) return String is ("");
 
    procedure Inc_Ref (Val : Value_Type) is null;
    procedure Dec_Ref (Val : in out Value_Type) is null;
@@ -84,16 +88,18 @@ package Langkit_Support.Adalog.Eq_Same is
       type Converter is private;
       No_Data : Converter;
 
+      with function Convert
+        (Data : Converter; From : Value_Type) return Value_Type;
+
+      with function Image (Data : Converter) return String is <>;
+
       type Equals_Data is private;
       No_Equals_Data : Equals_Data;
 
-      with function Convert
-        (Data : Converter; From : Value_Type) return Value_Type;
       with function Equals
         (Eq_Data : Equals_Data; L, R : Value_Type) return Boolean is <>;
 
-      Convert_Image : String := "";
-      Equals_Image  : String := "";
+      with function Image (Eq_Data : Equals_Data) return String is <>;
 
       One_Side_Convert : Boolean := False;
 
@@ -103,8 +109,7 @@ package Langkit_Support.Adalog.Eq_Same is
         (Value_Type, Value_Type,
          Converter, Converter, No_Data, No_Data,
          Equals_Data, No_Equals_Data,
-         Convert, Convert, Equals, Equals,
-         Convert_Image, Equals_Image,
+         Convert, Convert, Image, Image, Equals, Equals, Image,
          Logic_Vars, Logic_Vars,
          L_Inc_Ref => Inc_Ref,
          R_Inc_Ref => Inc_Ref,

@@ -36,11 +36,13 @@ package body Langkit_Support.Adalog.Solver is
    function Convert
      (Dummy : Default_Converter; From : Value_Type) return Value_Type
    is (From);
+   function Image (Dummy : Default_Converter) return String is ("");
 
    type Default_Eq is null record;
    function Equals
      (Dummy : Default_Eq; L, R : Value_Type) return Boolean
    is (L = R);
+   function Image (Dummy : Default_Eq) return String is ("");
 
    package SSM_Unify is new SSM_Solve.Raw_Custom_Bind
      (Converter        => Default_Converter,
@@ -58,6 +60,9 @@ package body Langkit_Support.Adalog.Solver is
       then L = R
       else Self.Compare (L, R));
 
+   function Image (Self : Comparer_Access) return String is
+     (if Self = null then "" else Self.Image);
+
    type Converter_Access is access all Solver_Ifc.Converter_Type'Class;
    function Convert
      (Self : Converter_Access; From : Value_Type) return Value_Type
@@ -65,6 +70,9 @@ package body Langkit_Support.Adalog.Solver is
      (if Self = null
       then From
       else Self.Convert (From));
+
+   function Image (Self : Converter_Access) return String is
+     (if Self = null then "" else Self.Image);
 
    package SSM_Bind is new SSM_Solve.Raw_Custom_Bind
      (Converter        => Converter_Access,
@@ -335,7 +343,7 @@ package body Langkit_Support.Adalog.Solver is
                   C := new Converter_Type'Class'(Conv);
                end if;
 
-               if Eq = No_Comparer then
+               if Eq /= No_Comparer then
                   E := new Comparer_Type'Class'(Eq);
                end if;
 
@@ -404,9 +412,12 @@ package body Langkit_Support.Adalog.Solver is
                   C := new Converter_Type'Class'(Conv);
                end if;
 
-               if Eq = No_Comparer then
+               if Eq /= No_Comparer then
                   E := new Comparer_Type'Class'(Eq);
                end if;
+
+               Solver_Trace.Trace ("Eq image:" & Eq.Image);
+               Solver_Trace.Trace ("Conv image:" & Conv.Image);
 
                return Rel : Relation :=
                  (State_Machine,
@@ -492,7 +503,8 @@ package body Langkit_Support.Adalog.Solver is
                      end if;
                   end loop;
 
-                  Rel.SSM_Relation := Operations.Logic_Any (Internal_Rels);
+                  Rel.SSM_Relation := Operations.Logic_Any
+                    (Internal_Rels, Debug_String);
                end return;
             end;
       end case;
@@ -538,7 +550,8 @@ package body Langkit_Support.Adalog.Solver is
                      end if;
                   end loop;
 
-                  Rel.SSM_Relation := Operations.Logic_All (Internal_Rels);
+                  Rel.SSM_Relation := Operations.Logic_All
+                    (Internal_Rels, Debug_String);
                end return;
             end;
       end case;
@@ -558,7 +571,9 @@ package body Langkit_Support.Adalog.Solver is
                Sym_Solve.Create_True (Debug_String));
          when State_Machine =>
             return Relation'
-              (State_Machine, Pure_Relations.True_Rel, Vars => <>);
+              (State_Machine,
+               Pure_Relations.True_Rel (Debug_String),
+               Vars => <>);
       end case;
    end Create_True;
 
@@ -576,7 +591,9 @@ package body Langkit_Support.Adalog.Solver is
                Sym_Solve.Create_False (Debug_String));
          when State_Machine =>
             return Relation'
-              (State_Machine, Pure_Relations.False_Rel, Vars => <>);
+              (State_Machine,
+               Pure_Relations.False_Rel (Debug_String),
+               Vars => <>);
       end case;
    end Create_False;
 

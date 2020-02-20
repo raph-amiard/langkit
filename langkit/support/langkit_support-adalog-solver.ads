@@ -135,13 +135,13 @@ package Langkit_Support.Adalog.Solver is
 
    function Create_Any
      (Relations    : Relation_Array;
-     Debug_String : String_Access := null) return Relation;
+      Debug_String : String_Access := null) return Relation;
    --  Create an Any relation. An Any relation solves successfully if any of
    --  its sub-relations solves successfully.
 
    function Create_All
      (Relations    : Relation_Array;
-     Debug_String : String_Access := null) return Relation;
+      Debug_String : String_Access := null) return Relation;
    --  Create an All relation. An All relation solves successfully if all of
    --  its sub-relation solves successfully.
 
@@ -152,7 +152,7 @@ package Langkit_Support.Adalog.Solver is
 
    function Create_And
      (L, R         : Relation;
-     Debug_String : String_Access := null) return Relation
+      Debug_String : String_Access := null) return Relation
    is (Create_All ((L, R), Debug_String));
 
    function Create_True (Debug_String : String_Access := null) return Relation;

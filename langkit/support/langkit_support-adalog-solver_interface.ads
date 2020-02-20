@@ -61,7 +61,7 @@ package Langkit_Support.Adalog.Solver_Interface is
    type Comparer_Type is abstract new Base_Functor_Type with null record;
    function Compare
      (Self : Comparer_Type; L, R : Value_Type) return Boolean is abstract;
-   --  Type to compare two values of Value_TYpe, returning whether they're
+   --  Type to compare two values of Value_Type, returning whether they're
    --  equal or not.
    function Image (Self : Comparer_Type) return String is ("");
 

@@ -42,6 +42,8 @@
      (Self : ${type_name}; From : ${entity}) return ${entity}
      with Inline;
 
+   overriding function Image (Self : ${type_name}) return String;
+
    -------------
    -- Convert --
    -------------
@@ -65,6 +67,15 @@
 
       return (Node => Ret.Node, Info => Ret.Info);
    end Convert;
+
+   -----------
+   -- Image --
+   -----------
+
+   overriding function Image (Self : ${type_name}) return String is
+   begin
+      return ("${conv_prop.qualname}");
+   end Image;
 </%def>
 
 <%def name="logic_equal(eq_prop)">
