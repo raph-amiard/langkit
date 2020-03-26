@@ -4168,47 +4168,22 @@ class PropertyDef(AbstractNodeData):
                 self.name).camel_with_underscores
 
     @property
-    def reason_for_no_memoization(self):
-        """
-        Return whether this property is a valid candidate for memoization.
-
-        If it is memoizable, return None, otherwise return a message that
-        describes why it is not memoizable.
-
-        This predicate ignores callgraph considerations and focuses on
-        characteristics specific to `self`: whether it contains side-effects
-        (equation solving), whether it is external, or abstract. The
-        `CompileCtx.check_memoized` pass will take care of doing call-graph
-        analysis on top of this.
-
-        :rtype: None|str
-        """
-        if self.abstract:
-            return ('A memoized property cannot be abstract: memoization is'
-                    ' not an inherited behavior')
-
-        if self.external:
-            return 'An external property cannot be memoized'
-
-        return None
-
-    @property
-    def transitive_reason_for_no_memoization(self):
+    def non_memoizable_because(self):
         """
         Determine if there is a reason that this property cannot be memoized.
-        If so, this reason is considered to be transitive and will propagate to
-        properties that all this one.
 
         If there is no such reason (i.e. if this property can be memoized,
         assuming that `self.reason_for_no_memoization` returns True), return
         None. Otherwise, return the reason as a string.
 
-        As for `reason_for_no_memoization`, this does not do callgraph
-        propagation itself and relies on `CompileCtx.check_memoized` to do so.
+        NOTE: A property tagged as non memoizable here will also make all of
+        its caller properties non memoizable. This is not computed here, but in 
 
         :rtype: str|None
         """
-        if self._call_non_memoizable_because:
+        if self.call_memoizable:
+            return None
+        elif self._call_non_memoizable_because:
             return self._call_non_memoizable_because
         elif self._solves_equation:
             return 'Cannot memoize equation solving'

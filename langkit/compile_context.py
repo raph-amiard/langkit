@@ -2689,27 +2689,45 @@ class CompileCtx(object):
         _, back_graph = self.properties_callgraphs()
         annotations = {prop: Annotation() for prop in back_graph}
 
-        # First check that properties can be memoized without considering
-        # callgraph-transitive evidence that they cannot (but collect all
-        # information).
-        for astnode in self.astnode_types:
-            for prop in astnode.get_properties(include_inherited=False):
+        # First:
+        # - For each property, collect whether it, or calls to it, are
+        #   memoizable. This information will be propagated through the
+        #   call-graph right after, so that properties that call non memoizable
+        #   properties are marked as non memoizable.
+        #
+        # - Check that properties marked as memoized by the user don't have any
+        #   simple issues (not considering transitive memoization issues
+        #   mentioned above) preventing memoization.
+        #
+
+        for prop in self.all_properties(include_inherited=False):
+
+            # If there is a reason this property or calls to it are not
+            # memoizable, register it in the annotations map, for later
+            # call-graph transitive analysis.
+            reason = prop.non_memoizable_because
+            if reason is not None:
+                annotations[prop] = Annotation(reason, [prop])
+
+            if prop.memoized:
                 with prop.diagnostic_context:
+                    check_source_language(
+                        not prop.abstract,
+                        'A memoized property cannot be abstract: memoization'
+                        ' is not an inherited behavior'
+                    )
 
-                    tr_reason = prop.transitive_reason_for_no_memoization
-                    if tr_reason is not None and not prop.call_memoizable:
-                        annotations[prop] = Annotation(tr_reason, [prop])
-
-                    if not prop.memoized:
-                        continue
-
-                    reason = prop.reason_for_no_memoization
-                    check_source_language(reason is None, reason)
+                    check_source_language(
+                        not prop.external,
+                        'An external property cannot be memoized'
+                    )
 
                     self.memoized_properties.add(prop)
                     prop.struct.add_as_memoization_key(self)
+
                     if prop.uses_entity_info:
                         T.entity_info.add_as_memoization_key(self)
+
                     for arg in prop.arguments:
                         check_source_language(
                             arg.type.hashable,
@@ -2740,24 +2758,25 @@ class CompileCtx(object):
                     annotations[caller] = callee_annot
                     queue.add(caller)
 
-        for prop, annot in sorted(annotations.items(),
-                                  key=lambda p: p[0].qualname):
-            if not prop.memoized or annot.memoizable:
-                continue
+        # Emit diagnostics for properties that were determined non memoizable
+        for prop, annot in sorted(
+            annotations.items(), key=lambda p: p[0].qualname
+        ):
+            if prop.memoized and not annot.memoizable:
+                message = 'Property cannot be memoized '
+                if annot.call_chain:
+                    message += '(in {}: {}, call chain is: {})'.format(
+                        annot.call_chain[0].qualname,
+                        annot.reason,
+                        ' -> '.join(p.qualname
+                                    for p in reversed(annot.call_chain))
+                    )
+                else:
+                    message += '({})'.format(annot.reason)
 
-            message = 'Property cannot be memoized '
-            if annot.call_chain:
-                message += '(in {}: {}, call chain is: {})'.format(
-                    annot.call_chain[0].qualname,
-                    annot.reason,
-                    ' -> '.join(p.qualname for p in reversed(annot.call_chain))
-                )
-            else:
-                message += '({})'.format(annot.reason)
-
-            with prop.diagnostic_context:
-                check_source_language(False, message,
-                                      severity=Severity.non_blocking_error)
+                with prop.diagnostic_context:
+                    check_source_language(False, message,
+                                          severity=Severity.non_blocking_error)
 
     TypeSet = utils.TypeSet
 
