@@ -34,7 +34,7 @@ class Def(Stmt):
         add_env()
     )
 
-    faulty_prop = Property(Self._env_mappings_0)
+    faulty_prop = Property(Self.env_mappings_0)
 
 
 class Block(Stmt):
