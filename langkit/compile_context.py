@@ -1822,6 +1822,7 @@ class CompileCtx(object):
                        CompileCtx.compute_uses_entity_info_attr),
             GlobalPass('compute uses envs attribute',
                        CompileCtx.compute_uses_envs_attr),
+
             EnvSpecPass('check env specs', EnvSpec.check_spec),
             GlobalPass('warn on unused private properties',
                        CompileCtx.warn_unused_private_properties),

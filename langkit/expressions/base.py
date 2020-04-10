@@ -4205,7 +4205,8 @@ class PropertyDef(AbstractNodeData):
         None. Otherwise, return the reason as a string.
 
         NOTE: A property tagged as non memoizable here will also make all of
-        its caller properties non memoizable. This is not computed here, but in 
+        its caller properties non memoizable. This is not computed here, but in
+        the corresponding pass in CompileCtx.
 
         :rtype: str|None
         """

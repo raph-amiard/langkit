@@ -33,6 +33,8 @@ is
    ## Dispatchers must not memoize because it will be done at the static
    ## property level: we do not want to do it twice.
    <% memoized = property.memoized and not property.is_dispatcher %>
+   <% ht_memoized = memoized and property.memo_kind.value == 1 %>
+   <% field_memoized = memoized and property.memo_kind.value == 2 %>
 
    % if property._has_self_entity:
    Ent : ${Self.type.entity.name} :=
@@ -76,7 +78,7 @@ is
       % endfor
    % endif
 
-   % if memoized:
+   % if ht_memoized:
       <%
          key_length = 1 + len(property.arguments)
          if property.uses_entity_info:
