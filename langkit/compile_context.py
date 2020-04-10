@@ -2746,13 +2746,19 @@ class CompileCtx(object):
 
                         from compiled_types import UserField
 
-                        field = UserField(
+                        prop.struct.add_field(UserField(
                             prop.type,
                             name=prop.name + names.Name.from_lowercase(
                                 "builtin_memo"
                             )
-                        )
-                        prop.struct.add_field(field)
+                        ))
+
+                        prop.struct.add_field(UserField(
+                            T.MemoState,
+                            name=prop.name + names.Name.from_lowercase(
+                                "builtin_memo_state"
+                            )
+                        ))
 
                     else:
                         # For regular memoized properties, we need to register

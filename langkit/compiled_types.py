@@ -3880,6 +3880,14 @@ def create_builtin_types():
              value_names=[names.Name('Recursive'),
                           names.Name('Flat'),
                           names.Name('Minimal')])
+
+    EnumType(name='MemoState',
+             location=None,
+             doc="""
+             """,
+             value_names=[names.Name('Evaluating'),
+                          names.Name('Prop_Error')])
+
     lex_env_type = CompiledType(
         'LexicalEnv',
         nullexpr='Empty_Env',

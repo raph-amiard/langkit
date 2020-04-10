@@ -1090,6 +1090,16 @@ class _BuiltinValue(object):
             resolve_type(getattr(T, enum_type_name)).resolve_value(value_name))
 
 
+class MemoState(_BuiltinType):
+    """
+    Type for the analysis unit kind enumeration.
+    """
+    _name = names.Name('Lookup_Kind')
+
+    evaluating = _BuiltinValue._enum_value_resolver('MemoState', 'evaluating')
+    prop_error = _BuiltinValue._enum_value_resolver('MemoState', 'prop_error')
+
+
 class LookupKind(_BuiltinType):
     """
     Type for the analysis unit kind enumeration.
