@@ -1341,24 +1341,25 @@ class CompiledType(object):
             field) for this struct's fields. Inheritted fields must not appear
             in this list.
         """
-        for f_n, f_v in fields:
+        for name, field in fields:
             # Remember the original name for public APIs
-            f_v._original_name = (f_n if isinstance(f_n, names.Name) else
-                                  names.Name.from_lower(f_n))
-            f_v._indexing_name = f_v.original_name.lower
+            field._original_name = (name if isinstance(name, names.Name) else
+                                    names.Name.from_lower(name))
+            field._indexing_name = field.original_name.lower
 
             # In nodes, use a qualified name for code generation to avoid name
             # conflicts between homonym properties. There is one exception:
             # built-in properties (those with no prefix) must not be decorated
             # for convenience in template code.
-            f_v._name = (
-                f_v._original_name
+            field._name = (
+                field._original_name
                 if (not self.is_ast_node or
-                    (f_v.is_property and f_v.prefix is None)) else
-                self.kwless_raw_name + f_v._prefixed_name(f_v.original_name)
+                    (field.is_property and field.prefix is None)) else
+                self.kwless_raw_name
+                + field._prefixed_name(field.original_name)
             )
 
-            self.add_field(f_v)
+            self.add_field(field)
 
     def add_field(self, field):
         """
