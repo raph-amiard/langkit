@@ -3031,6 +3031,31 @@ def render(*args, **kwargs):
 inherited_information = inherited_property(lambda s: s.base_property)
 
 
+class MemoKind(Enum):
+    """
+    Kind of memoization for a property. There are two kinds of memoization:
+
+    * "regular": This mechanism allows memoization of a property through a
+        context level cache. Any property can be memoized as long as all its
+        arguments are hashable, and it doesn't use forbidden operations (mainly
+        operations with side effects):
+
+        - Equation solving.
+        - Getting of a logic variable value.
+        - Calling a property manually marked as non memoizable.
+
+    * "field": This mecanism allows memoization in a much more restricted
+       context, of properties taking no arguments, respecting all the condtions
+       above, and also not using operations that might cross unit boundaries,
+       such as lexical env operations.
+
+       Those fields will automatically be memoized even during PLE, and will
+       also allow creation of synthetic values.
+    """
+    regular = 1
+    field = 2
+
+
 class PropertyDef(AbstractNodeData):
     """
     This is the underlying class that is used to represent properties in the
@@ -3063,11 +3088,10 @@ class PropertyDef(AbstractNodeData):
     def __init__(self, expr, prefix, name=None, doc=None, public=None,
                  abstract=False, type=None, abstract_runtime_check=False,
                  dynamic_vars=None, memoized=False, call_memoizable=False,
-                 memoize_in_populate=False, external=False,
-                 uses_entity_info=None, uses_envs=None,
+                 memo_kind=MemoKind.regular, memoize_in_populate=False,
+                 external=False, uses_entity_info=None, uses_envs=None,
                  optional_entity_info=False, warn_on_unused=True,
-                 ignore_warn_on_node=None,
-                 call_non_memoizable_because=None,
+                 ignore_warn_on_node=None, call_non_memoizable_because=None,
                  activate_tracing=False, dump_ir=False):
         """
         :param expr: The expression for the property. It can be either:
@@ -3298,8 +3322,12 @@ class PropertyDef(AbstractNodeData):
         ":type: str|None"
 
         self.memoized = memoized
+        self.memo_kind = memo_kind
         self.call_memoizable = call_memoizable
-        self.memoize_in_populate = memoize_in_populate
+        self.memoize_in_populate = (
+            # MemoKind.field memoization is always memoizable during PLE
+            memoize_in_populate or (memo_kind == MemoKind.field)
+        )
 
         self.external = external
 

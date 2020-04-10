@@ -1838,8 +1838,11 @@ class CompileCtx(object):
                         auto_context=False),
             GlobalPass('lower properties dispatching',
                        CompileCtx.lower_properties_dispatching),
+
+            # This pass depends on the compute_uses_envs_attr pass
             GlobalPass('check memoized properties',
                        CompileCtx.check_memoized),
+
             GlobalPass('compute AST node constants',
                        CompileCtx.compute_astnode_constants),
             errors_checkpoint_pass,
@@ -2627,6 +2630,7 @@ class CompileCtx(object):
         Also register involved types in the memoization machinery.
         """
         from langkit.compiled_types import T
+        from langkit.expressions.base import MemoKind
 
         class Annotation(object):
             """
@@ -2710,6 +2714,8 @@ class CompileCtx(object):
                 annotations[prop] = Annotation(reason, [prop])
 
             if prop.memoized:
+                field_memo = (prop.memo_kind == MemoKind.field)
+
                 with prop.diagnostic_context:
                     check_source_language(
                         not prop.abstract,
@@ -2723,21 +2729,41 @@ class CompileCtx(object):
                     )
 
                     self.memoized_properties.add(prop)
-                    prop.struct.add_as_memoization_key(self)
 
-                    if prop.uses_entity_info:
-                        T.entity_info.add_as_memoization_key(self)
-
-                    for arg in prop.arguments:
+                    # Actions to execute for field memoized properties
+                    if field_memo:
+                        # Check that the property doesn't use envs at all
                         check_source_language(
-                            arg.type.hashable,
-                            'This property cannot be memoized because argument'
-                            ' {} (of type {}) is not hashable'.format(
-                                arg.name.lower, arg.type.dsl_name
-                            ),
+                            not prop.uses_envs,
+                            "Field memoized properties cannot use envs"
                         )
-                        arg.type.add_as_memoization_key(self)
-                    prop.type.add_as_memoization_value(self)
+
+                        check_source_language(
+                            len(prop.arguments) == 0,
+                            "Field memoized properties cannot have arguments"
+                        )
+
+                    else:
+                        # For regular memoized properties, we need to register
+                        # every type used either as a mmz key or value, so that
+                        # we can later generate the necessary helpers.
+
+                        prop.struct.add_as_memoization_key(self)
+                        prop.type.add_as_memoization_value(self)
+
+                        if prop.uses_entity_info:
+                            T.entity_info.add_as_memoization_key(self)
+
+                        for arg in prop.arguments:
+                            check_source_language(
+                                arg.type.hashable,
+                                'Property cannot be memoized: Argument'
+                                ' `{}` (of type `{}`) is not hashable'.format(
+                                    arg.name.lower, arg.type.dsl_name
+                                ),
+                            )
+                            if not field_memo:
+                                arg.type.add_as_memoization_key(self)
 
         # Now do the propagation of callgraph-transitive evidence
         queue = {p for p, a in annotations.items() if not a.memoizable}
