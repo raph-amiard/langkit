@@ -2744,6 +2744,16 @@ class CompileCtx(object):
                             "Field memoized properties cannot have arguments"
                         )
 
+                        from compiled_types import UserField
+
+                        field = UserField(
+                            prop.type,
+                            name=prop.name + names.Name.from_lowercase(
+                                "builtin_memo"
+                            )
+                        )
+                        prop.struct.add_field(field)
+
                     else:
                         # For regular memoized properties, we need to register
                         # every type used either as a mmz key or value, so that
