@@ -1342,31 +1342,49 @@ class CompiledType(object):
             in this list.
         """
         for name, field in fields:
-            # Remember the original name for public APIs
-            field._original_name = (name if isinstance(name, names.Name) else
-                                    names.Name.from_lower(name))
-            field._indexing_name = field.original_name.lower
+            self.add_field(field, name)
 
-            # In nodes, use a qualified name for code generation to avoid name
-            # conflicts between homonym properties. There is one exception:
-            # built-in properties (those with no prefix) must not be decorated
-            # for convenience in template code.
-            field._name = (
-                field._original_name
-                if (not self.is_ast_node or
-                    (field.is_property and field.prefix is None)) else
-                self.kwless_raw_name
-                + field._prefixed_name(field.original_name)
-            )
-
-            self.add_field(field)
-
-    def add_field(self, field):
+    def add_field(self, field, name, original_name=None, index_pfx=""):
         """
         Append a field to this Struct/AST node.
 
         :param AbstractNodeData field: Field to append.
+
+        :param str|names.Name name: Name for this field.
+
+        :param str|names.Name|None original_name: Override for original name.
+
+        :param bool index_pfx: Prefix to add to this field in the indexing
+            table.
         """
+        nname = (name
+                 if isinstance(name, names.Name)
+                 else names.Name.from_lower(name))
+
+        # In nodes, use a qualified name for code generation to avoid name
+        # conflicts between homonym properties. There is one exception:
+        # built-in properties (those with no prefix) must not be decorated
+        # for convenience in template code.
+        field._name = (nname
+                       if (not self.is_ast_node
+                           or (field.is_property and field.prefix is None))
+                       else self.kwless_raw_name + field._prefixed_name(nname))
+
+        # Remember the original name for public APIs
+        field._original_name = (
+            (original_name
+             if isinstance(original_name, names.Name)
+             else names.Name.from_lower(original_name))
+            if original_name is not None
+            else nname
+        )
+
+        # Indexing name: prefix with [internal] for internal fields
+        field._indexing_name = "{}{}".format(
+            index_pfx,
+            field.original_name.lower
+        )
+
         self._fields[field.indexing_name] = field
         field.struct = self
 
@@ -2343,9 +2361,6 @@ class ASTNodeType(BaseStructType):
 
     # Various names for the "is_env_populated" field for PLE unit roots
     is_env_populated_name = names.Name('Is_Env_Populated')
-    is_env_populated_indexing_name = (
-        '[internal]{}'.format(is_env_populated_name.lower)
-    )
 
     def __init__(self, name, location, doc, base, fields,
                  env_spec=None, element_type=None, annotations=None,

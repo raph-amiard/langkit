@@ -1102,19 +1102,15 @@ class CompileCtx(object):
                                               ple_unit_root_list.dsl_name)
                     )
 
-        is_env_populated_flag = UserField(
-            type=T.Bool,
-            doc='Whether this PLE unit root was processed by'
-                ' Populate_Lexical_Env.',
-            public=False
+        self.ple_unit_root.add_field(
+            UserField(
+                type=T.Bool,
+                doc='Whether this PLE unit root was processed by'
+                    ' Populate_Lexical_Env.',
+                public=False
+            ),
+            ASTNodeType.is_env_populated_name,
         )
-        is_env_populated_flag._name = is_env_populated_flag._original_name = (
-            ASTNodeType.is_env_populated_name
-        )
-        is_env_populated_flag._indexing_name = (
-            ASTNodeType.is_env_populated_indexing_name
-        )
-        self.ple_unit_root.add_field(is_env_populated_flag)
 
     def check_concrete_subclasses(self, astnode):
         """
@@ -2327,12 +2323,12 @@ class CompileCtx(object):
                     # generation. Make sure it is registered under a name that
                     # is different from the dispatcher so that both are present
                     # in the structures' field dict.
-                    root_static._name = prop_name
-                    root_static._original_name = prop._original_name
-                    root_static._indexing_name = (
-                        '[root-static]{}'.format(prop.indexing_name)
+                    prop.struct.add_field(
+                        root_static,
+                        prop_name,
+                        index_pfx='[root-static]'
+
                     )
-                    prop.struct.add_field(root_static)
 
                     # Transfer arguments from the dispatcher to the new static
                     # property, then regenerate arguments in the dispatcher.
@@ -2744,21 +2740,21 @@ class CompileCtx(object):
                             "Field memoized properties cannot have arguments"
                         )
 
-                        from compiled_types import UserField
+                        from langkit.compiled_types import UserField
 
-                        prop.struct.add_field(UserField(
-                            prop.type,
-                            name=prop.name + names.Name.from_lowercase(
+                        prop.struct.add_field(
+                            UserField(prop.type),
+                            name=prop.name + names.Name.from_lower(
                                 "builtin_memo"
                             )
-                        ))
+                        )
 
-                        prop.struct.add_field(UserField(
-                            T.MemoState,
-                            name=prop.name + names.Name.from_lowercase(
+                        prop.struct.add_field(
+                            UserField(T.MemoState),
+                            name=prop.name + names.Name.from_lower(
                                 "builtin_memo_state"
                             )
-                        ))
+                        )
 
                     else:
                         # For regular memoized properties, we need to register
