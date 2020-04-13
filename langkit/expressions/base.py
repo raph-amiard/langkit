@@ -4312,6 +4312,31 @@ def AbstractProperty(type, doc="", runtime_check=False, **kwargs):
 
 
 # noinspection PyPep8Naming
+def LazyField(expr, doc=None, public=None, type=None,
+              memoized=False, warn_on_unused=True):
+    """
+    Public constructor for concrete properties. You can declare your properties
+    on your AST node subclasses directly, like this::
+
+        class SubNode(ASTNode):
+            my_field = Field()
+            my_property = Property(Self.my_field)
+
+    and functions will be generated in the resulting library.
+
+    :type expr: AbstractExpression|function
+    :type type: CompiledType
+    :type doc: str
+    :type public: bool|None
+    :rtype: PropertyDef
+    """
+    return PropertyDef(
+        expr, AbstractNodeData.PREFIX_PROPERTY, doc=doc, public=public,
+        type=type, memoized=True, memo_kind=MemoKind.field
+    )
+
+
+# noinspection PyPep8Naming
 def Property(expr, doc=None, public=None, type=None, dynamic_vars=None,
              memoized=False, warn_on_unused=True, uses_entity_info=None,
              ignore_warn_on_node=None, call_non_memoizable_because=None):
