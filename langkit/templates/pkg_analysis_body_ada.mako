@@ -456,6 +456,17 @@ package body ${ada_lib_name}.Analysis is
       return Get_Line (Unwrap_Unit (Unit), Line_Number);
    end Get_Line;
 
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Full_Name
+     (Unit : Analysis_Unit) return String
+   is
+   begin
+      return Get_Filename (Unit);
+   end Get_Full_Name;
+
    ----------------------
    -- Dump_Lexical_Env --
    ----------------------

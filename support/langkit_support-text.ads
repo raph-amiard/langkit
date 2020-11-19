@@ -20,7 +20,6 @@
 -- the files COPYING3 and COPYING.RUNTIME respectively.  If not, see        --
 -- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
-
 with Ada.Strings.UTF_Encoding;
 with Ada.Strings.Wide_Wide_Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -108,9 +107,16 @@ package Langkit_Support.Text is
    --  NOTE??? T821-010: This should be an *interface*, but instead is an
    --  abstract class, because of a bug in the generated equality operator.
 
+   type Text_Buffer_Access is access constant Text_Buffer_Ifc'Class;
+
    function Get_Line
-     (Self : Text_Buffer_Ifc; Line_Number : Positive) return Text_Type
-      is abstract;
+     (Self        : Text_Buffer_Ifc;
+      Line_Number : Positive) return Text_Type is abstract;
    --  Return line at index ``Line_Number``
+
+   function Get_Full_Name
+     (Self : Text_Buffer_Ifc) return String is abstract;
+   --  Return the full name of this text buffer. Expected to be a full path if
+   --  this buffer is from a file.
 
 end Langkit_Support.Text;

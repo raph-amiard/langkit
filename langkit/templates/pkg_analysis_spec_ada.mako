@@ -327,6 +327,9 @@ package ${ada_lib_name}.Analysis is
      (Unit : Analysis_Unit; Line_Number : Positive) return Text_Type;
    --  Return the line of text at line number ``Line_Number``
 
+   overriding function Get_Full_Name (Unit : Analysis_Unit) return String;
+   --  Return the full name of the unit.
+
    type Child_Record (Kind : Child_Or_Trivia := Child) is record
       case Kind is
          when Child =>
