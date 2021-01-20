@@ -87,7 +87,8 @@ package body Langkit_Support.Lexical_Envs_Impl is
       Rebindings    : Env_Rebindings := null;
       Metadata      : Node_Metadata := Empty_Metadata;
       Categories    : Ref_Categories;
-      Local_Results : in out Lookup_Result_Vector);
+      Local_Results : in out Lookup_Result_Vector;
+      Toplevel      : Boolean := True);
 
    procedure Reset_Lookup_Cache (Self : Lexical_Env);
    --  Reset Self's lexical environment lookup cache
@@ -614,7 +615,8 @@ package body Langkit_Support.Lexical_Envs_Impl is
       Rebindings    : Env_Rebindings := null;
       Metadata      : Node_Metadata := Empty_Metadata;
       Categories    : Ref_Categories;
-      Local_Results : in out Lookup_Result_Vector)
+      Local_Results : in out Lookup_Result_Vector;
+      Toplevel      : Boolean := True)
    is
       Env : constant Lexical_Env_Access := Unwrap (Self);
 
@@ -877,7 +879,8 @@ package body Langkit_Support.Lexical_Envs_Impl is
                Rebindings  => Shed_Rebindings (Env, Current_Rebindings),
                Metadata    => Metadata,
                Categories  => Categories,
-               Local_Results => Refd_Results);
+               Local_Results => Refd_Results,
+               Toplevel      => False);
 
             if Self.Getter.Dynamic then
                for Res of Refd_Results loop
@@ -935,7 +938,8 @@ package body Langkit_Support.Lexical_Envs_Impl is
          when Orphaned =>
             Get_Internal
               (Env.Orphaned_Env, Key, Flat, Rebindings, Metadata,
-               Categories, Local_Results);
+               Categories, Local_Results,
+               Toplevel      => False);
             return;
 
          when Grouped =>
@@ -947,7 +951,8 @@ package body Langkit_Support.Lexical_Envs_Impl is
             begin
                for E of Env.Grouped_Envs.all loop
                   Get_Internal (E, Key, Lookup_Kind, Rebindings, MD,
-                                Categories, Local_Results);
+                                Categories, Local_Results,
+                                Toplevel      => False);
                end loop;
             end;
             Rec.Decrease_Indent;
@@ -958,7 +963,8 @@ package body Langkit_Support.Lexical_Envs_Impl is
             Get_Internal
               (Env.Rebound_Env, Key, Lookup_Kind,
                Combine (Env.Rebindings, Rebindings),
-               Metadata, Categories, Local_Results);
+               Metadata, Categories, Local_Results,
+               Toplevel      => False);
             return;
 
          when Primary_Kind =>
@@ -968,7 +974,11 @@ package body Langkit_Support.Lexical_Envs_Impl is
 
       --  At this point, we know that Self is a primary lexical environment
 
-      if Has_Lookup_Cache (Self) and then Lookup_Kind = Recursive then
+      if Has_Lookup_Cache (Self)
+        and then Lookup_Kind = Recursive
+        --  Only cache top level requests
+        and then Toplevel
+      then
 
          if not Is_Lookup_Cache_Valid (Self) then
             Reset_Lookup_Cache (Self);
@@ -1069,7 +1079,8 @@ package body Langkit_Support.Lexical_Envs_Impl is
                Get_Internal
                  (Parent_Env, Key, Lookup_Kind,
                   Parent_Rebindings,
-                  Metadata, Categories, Local_Results);
+                  Metadata, Categories, Local_Results,
+                  Toplevel      => False);
                if Has_Trace then
                   Rec.Decrease_Indent;
                end if;
@@ -1106,6 +1117,7 @@ package body Langkit_Support.Lexical_Envs_Impl is
       Dec_Ref (Extracted);
 
       if Has_Lookup_Cache (Self)
+        and then Toplevel
         and then Lookup_Kind = Recursive
         and then Need_Cache
       then
